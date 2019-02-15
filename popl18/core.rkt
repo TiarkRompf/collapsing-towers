@@ -77,7 +77,7 @@
         (side-condition (not-code? (term v_1))))
    (--> (in-hole P (in-hole E (reflect (code e))))
         (in-hole P (letc x_new e (in-hole E (code x_new))))               "reify-reflect"
-        (where x_new ,(variable-not-in (term (R E e)) (term x))))
+        (where x_new ,(variable-not-in (term (P E e)) (term x))))
    (--> (in-hole M (letc x_1 e_1 (code e_2)))
         (in-hole M (code (let x_1 e_1 e_2)))                              "letc")
    ))
