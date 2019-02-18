@@ -602,11 +602,6 @@ its source is observationally equivalent to the program itself: ⟦ (run 0 (eval
 (* Proposition 4.4 (Optimality of Compilation). For any Pink program p, compiling its source
 yields exactly the program itself (in ANF): ⟦ (evalc p-src) ⟧ ⇓ ⟦ p ⟧. *)
 
-
-Lemma inv_app_lam: forall s fuel env e0 e2 r,
-    ev s (S fuel) env (EApp (ELam e0) e2) = r ->
-    (exists s' msg, r = (s', VError msg)) \/ (exists v2 s2 v1, ev s fuel env e2 = (s2, v2) /\ ev s2 fuel (v2::v1::env) e0 = r).
-Proof. Admitted.
 Lemma inv_app: forall s fuel env e1 e2 r,
   ev s (S fuel) env (EApp e1 e2) = r ->
   (exists s' msg, r = (s', VError msg)) \/
@@ -620,11 +615,28 @@ Lemma inv_app: forall s fuel env e1 e2 r,
       reflectc s2 (EApp v1 v2) = r).
 Proof. Admitted.
 
+Lemma inv_app_lam: forall s fuel env e0 e2 r,
+    ev s (S fuel) env (EApp (ELam e0) e2) = r ->
+    (exists s' msg, r = (s', VError msg)) \/ (exists v2 s2 v1, ev s fuel env e2 = (s2, v2) /\ ev s2 fuel (v2::v1::env) e0 = r).
+Proof.
+  intros. simpl in H.
+  destruct fuel as [| fuel].
+  { simpl in H. left. repeat eexists. subst. reflexivity. }
+  remember (ev s (S fuel) env (ELam e0)) as rLam.
+  simpl in HeqrLam. rewrite HeqrLam in H.
+  remember (ev s (S fuel) env e2) as r2.
+  destruct r2 as [s2 v2].
+  destruct v2; try solve [right; repeat eexists; subst; reflexivity].
+  left. repeat eexists. subst. reflexivity.
+Qed.  
+
 Lemma inv_if_true:  forall s fuel env e0 e1 e2 r s0,
     ev s (S fuel) env (EIf e0 e1 e2) = r ->
     ev s fuel env e0 = (s0, VNat 1) ->
-    (exists s' msg, r = (s', VError msg)) \/ (ev s0 fuel env e1 = r).
-Proof. Admitted.
+    (ev s0 fuel env e1 = r).
+Proof.
+  intros. simpl in H. rewrite H0 in H. apply H.
+Qed.
 
 Lemma correctness_of_interpretation_rec: forall n, forall fuel, fuel < n ->
    forall p s names r,
@@ -666,14 +678,12 @@ Proof.
     rewrite <- Heqrx1 in Hev1. destruct fuel as [| fuel].
     simpl in Hev1. inversion Hev1. simpl in Hev1.
     inversion Hev1. rewrite <- H2 in Hev3.
-    edestruct inv_if_true as [Ha | Hb].
-    eapply Hev3.
-    simpl. rewrite <- H1. simpl. subst. reflexivity.
-    left. apply Ha.
-    simpl in Hb. rewrite <- H1 in Hb. simpl in Hb. subst. right. repeat eexists.
-    simpl. subst.
+    eapply inv_if_true in Hev3.
     simpl in Heqrx1b. inversion Heqrx1b. subst. simpl.
-    simpl in Hev2. inversion Hev2. subst. reflexivity.
+    simpl in Hev3. right. repeat eexists.
+    simpl in Hev2. inversion Hev2. subst. simpl in Hev3.
+    simpl in Hev1. inversion Hev1. subst. rewrite <- Hev3. reflexivity.
+    simpl. subst. simpl. simpl in Hev2. inversion Hev2. subst. simpl in Heqrx1b. inversion Heqrx1b. reflexivity.
     admit.
   - simpl. admit.
   - simpl. admit.
