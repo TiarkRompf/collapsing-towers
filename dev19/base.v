@@ -66,7 +66,7 @@ Definition reflect (s: state) (e: exp) :=
 
 Definition reify (se: state * exp) :=
   match se with
-  | (s, e) => fold_right ELet e (snd s)
+  | (s, e) => fold_right ELet e (rev (snd s))
   end.
 
 Fixpoint anf (s: state) (env: list exp) (e: exp): (state * exp) :=
@@ -495,16 +495,7 @@ Section test_factorial.
   Definition fac_staged := Eval vm_compute in reifyc (ev0 fac_lifted).
   Print fac_staged.
   Definition fac4' := Eval vm_compute in ev0 (EApp fac_staged (ENat 4)).
-  Print fac4'. (* unbound variable -- something is wrong! *)
+  Print fac4'.
   Definition fac_anf := Eval vm_compute in anf0 fac.
   Print fac_anf.
-  (*
-    ELet
-    (ELam
-    (ELet
-    (EIf (EVar 1)
-         (ELet (EOp2 OTimes (EVar 1) (EVar 3)) (* <-- 3 defined later! *)
-         (ELet (EApp (EVar 0) (EVar 2)) (ELet (EOp2 OMinus (EVar 1) (ENat 1)) (EVar 4))))
-         (ENat 1)) (EVar 2))) (EVar 0)
-   *)
 End test_factorial.
