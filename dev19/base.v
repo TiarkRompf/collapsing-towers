@@ -442,7 +442,14 @@ Proof.
     destruct H2 as [? [? [Hev2 Ha2]]].
     rewrite Hev2. rewrite Ha2.
     right. simpl. repeat eexists.
-  - simpl. admit.
+  - simpl.
+    edestruct IHnMax with (fuel:=fuel) (e:=e); eauto. omega.
+    destruct H2 as [? [msg Herr]]. rewrite Herr.
+    destruct op; left; repeat eexists; reflexivity.
+    destruct H2 as [s' [e' [Hev Ha]]].
+    rewrite Hev. rewrite Ha.
+    unfold reflectc. unfold reflect. destruct s'. simpl.
+    destruct op; right; repeat eexists.
   - simpl. admit.
   - simpl. left. repeat eexists.
 Admitted.
