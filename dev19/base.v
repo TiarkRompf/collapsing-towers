@@ -667,7 +667,19 @@ Proof.
     right.
     rewrite Hi.
     admit. *)
-  - simpl. admit.
+  - eapply inv_app in H.
+    destruct H as [Herr | [Hev | Hec]].
+    left. apply Herr.
+    destruct Hev as [? [? [? [? [? [Hev1 [Hev2 Hev3]]]]]]].
+    simpl in Hev1. destruct fuel as [| fuel].
+    simpl in Hev1. inversion Hev1.
+    eapply inv_app in Hev1.
+    destruct Hev1 as [Herr | [Hev1 | Hec1]].
+    destruct Herr as [? [? Herr]]. inversion Herr.
+    destruct Hev1 as [? [? [? [? [? [Hev1 [Hev12 Hev13]]]]]]].
+    admit.
+    admit.
+    admit.
   - simpl. admit.
   - simpl. admit.
   - simpl. admit.
