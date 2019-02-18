@@ -475,7 +475,7 @@ Theorem anf_like_lift0: forall e,
     (exists msg, reifyc (ev0 (to_lifted e)) = EError msg) \/ reifyc (ev0 (to_lifted e)) = anf0 e.
 Proof.
   intros. unfold ev0. unfold anf0.
-  destruct anf_like_lift with (n:=101) (fuel:=100) (s:=(0,nil):state) (env1:=nil:list val) (env2:=nil:list exp) (e:=e); auto.
+  edestruct anf_like_lift with (fuel:=100) (s:=(0,nil):state) (env1:=nil:list val) (env2:=nil:list exp) (e:=e); auto.
   - intros. simpl in H. inversion H.
   - intros. simpl in H. inversion H.
   - destruct H as [s' [msg Herr]].
@@ -483,3 +483,28 @@ Proof.
   - destruct H as [s' [n' [Hev Ha]]].
     rewrite Hev. rewrite Ha. simpl. right. reflexivity.
 Qed.
+
+Section test_factorial.
+  Definition f_self := EVar 0.
+  Definition n := EVar 1.
+  Definition fac := ELam (EIf n (EOp2 OTimes n (EApp f_self (EOp2 OMinus n (ENat 1)))) (ENat 1)).
+  Definition fac4 := Eval vm_compute in ev0 (EApp fac (ENat 4)).
+  Print fac4.
+  Definition fac_lifted := Eval vm_compute in to_lifted fac.
+  Print fac_lifted.
+  Definition fac_staged := Eval vm_compute in reifyc (ev0 fac_lifted).
+  Print fac_staged.
+  Definition fac4' := Eval vm_compute in ev0 (EApp fac_staged (ENat 4)).
+  Print fac4'. (* unbound variable -- something is wrong! *)
+  Definition fac_anf := Eval vm_compute in anf0 fac.
+  Print fac_anf.
+  (*
+    ELet
+    (ELam
+    (ELet
+    (EIf (EVar 1)
+         (ELet (EOp2 OTimes (EVar 1) (EVar 3)) (* <-- 3 defined later! *)
+         (ELet (EApp (EVar 0) (EVar 2)) (ELet (EOp2 OMinus (EVar 1) (ENat 1)) (EVar 4))))
+         (ENat 1)) (EVar 2))) (EVar 0)
+   *)
+End test_factorial.
