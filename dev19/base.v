@@ -603,11 +603,33 @@ its source is observationally equivalent to the program itself: ⟦ (run 0 (eval
 yields exactly the program itself (in ANF): ⟦ (evalc p-src) ⟧ ⇓ ⟦ p ⟧. *)
 
 
+Lemma inv_app_lam: forall s fuel env e0 e2 r,
+    ev s (S fuel) env (EApp (ELam e0) e2) = r ->
+    (exists s' msg, r = (s', VError msg)) \/ (exists v2 s2 v1, ev s fuel env e2 = (s2, v2) /\ ev s2 fuel (v2::v1::env) e0 = r).
+Proof. Admitted.
+Lemma inv_app: forall s fuel env e1 e2 r,
+  ev s (S fuel) env (EApp e1 e2) = r ->
+  (exists s' msg, r = (s', VError msg)) \/
+  (exists s0 env0 e0 s2 v2,
+      ev s fuel env e1 = (s0, VClo env0 e0) /\
+      ev s0 fuel env e2 = (s2, v2) /\
+      ev s2 fuel (v2::(VClo env0 e0)::env0) e0 = r) \/
+  (exists s0 v1 s2 v2,
+      ev s fuel env e1 = (s0, VCode v1) /\
+      ev s0 fuel env e2 = (s2, VCode v2) /\
+      reflectc s2 (EApp v1 v2) = r).
+Proof. Admitted.
+
+Lemma inv_if_true:  forall s fuel env e0 e1 e2 r s0,
+    ev s (S fuel) env (EIf e0 e1 e2) = r ->
+    ev s fuel env e0 = (s0, VNat 1) ->
+    (exists s' msg, r = (s', VError msg)) \/ (ev s0 fuel env e1 = r).
+Proof. Admitted.
 
 Lemma correctness_of_interpretation_rec: forall n, forall fuel, fuel < n ->
-   forall p s env names env_to env_fun r,
-     ev s fuel env (EApp (EApp (EApp evl (ELam (EVar 1))) (to_src names env_to p)) env_fun) = r ->
-     (exists s' msg, r = (s', VError msg)) \/ r = ev s fuel env p.
+   forall p s names r,
+     ev s fuel [] (EApp (EApp (EApp evl (ELam (EVar 1))) (to_src names [] p)) (ELam (EVar 1))) = r ->
+     (exists s' msg, r = (s', VError msg)) \/ r = ev s fuel [] p.
 Proof.
   intros nMax. induction nMax; intros fuel Hfuel.
   inversion Hfuel.
@@ -628,11 +650,30 @@ Proof.
   - simpl. admit.
   - simpl. admit.
   - simpl.
-    simpl in H. destruct fuel as [| fuel].
-    simpl in H. subst. left. repeat eexists.
-    simpl in H. destruct fuel as [| fuel].
-    simpl in H. subst. left. repeat eexists.
-    unfold evl in H. simpl in H. (* too slow *)
+    eapply inv_app in H.
+    destruct H as [Herr | [Hev | Hec]].
+    left. apply Herr.
+    destruct Hev as [? [? [? [? [? [Hev1 [Hev2 Hev3]]]]]]].
+    destruct fuel as [|fuel].
+    simpl in Hev1. inversion Hev1.
+    simpl in Hev1.
+    remember (ev s fuel [] (EApp evl (ELam (EVar 1)))) as rx1.
+    destruct fuel as [|fuel].
+    simpl in Heqrx1. rewrite Heqrx1 in Hev1. inversion Hev1.
+    symmetry in Heqrx1. unfold evl in Heqrx1. eapply inv_app_lam in Heqrx1.
+    destruct Heqrx1 as [[? [? Heqrx1]] | [? [? [? [Heqrx1b Heqrx1]]]]].
+    rewrite Heqrx1 in Hev1. inversion Hev1.
+    rewrite <- Heqrx1 in Hev1. destruct fuel as [| fuel].
+    simpl in Hev1. inversion Hev1. simpl in Hev1.
+    inversion Hev1. rewrite <- H2 in Hev3.
+    edestruct inv_if_true as [Ha | Hb].
+    eapply Hev3.
+    simpl. rewrite <- H1. simpl. subst. reflexivity.
+    left. apply Ha.
+    simpl in Hb. rewrite <- H1 in Hb. simpl in Hb. subst. right. repeat eexists.
+    simpl. subst.
+    simpl in Heqrx1b. inversion Heqrx1b. subst. simpl.
+    simpl in Hev2. inversion Hev2. subst. reflexivity.
     admit.
   - simpl. admit.
   - simpl. admit.
