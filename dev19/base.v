@@ -602,36 +602,41 @@ its source is observationally equivalent to the program itself: ⟦ (run 0 (eval
 (* Proposition 4.4 (Optimality of Compilation). For any Pink program p, compiling its source
 yields exactly the program itself (in ANF): ⟦ (evalc p-src) ⟧ ⇓ ⟦ p ⟧. *)
 
+
+
 Lemma correctness_of_interpretation_rec: forall n, forall fuel, fuel < n ->
-   forall p s env names env_to,
-     (exists s' msg, ev s fuel env (to_src names env_to p) = (s', VError msg)) \/
-     ev s fuel env (to_src names env_to p) = ev s fuel env p.                Proof.
+   forall p s env names env_to env_fun r,
+     ev s fuel env (EApp (EApp (EApp evl (ELam (EVar 1))) (to_src names env_to p)) env_fun) = r ->
+     (exists s' msg, r = (s', VError msg)) \/ r = ev s fuel env p.
+Proof.
   intros nMax. induction nMax; intros fuel Hfuel.
   inversion Hfuel.
   intros.
   destruct fuel.
-  simpl. left. repeat eexists.
+  simpl. left. simpl in H; subst. repeat eexists. 
   destruct p.
+  - admit. (*
+    simpl. simpl in H.
+    case_eq (index n0 env_to); [intros ri Hi|].
+    case_eq (index n0 env); [intros vi Hiv|].
+    right.
+    rewrite Hi.
+    admit. *)
   - simpl. admit.
   - simpl. admit.
   - simpl. admit.
   - simpl. admit.
   - simpl. admit.
+  - simpl.
+    simpl in H. destruct fuel as [| fuel].
+    simpl in H. subst. left. repeat eexists.
+    simpl in H. destruct fuel as [| fuel].
+    simpl in H. subst. left. repeat eexists.
+    unfold evl in H. simpl in H. (* too slow *)
+    admit.
   - simpl. admit.
-  - simpl. right. reflexivity.
   - simpl. admit.
   - simpl. admit.
   - simpl. admit.
-  - simpl. admit.
-  - simpl. right. reflexivity.
+  - admit. (*simpl. right. reflexivity.*)
 Admitted.
-
-Theorem correctness_of_interpretation: forall p,
-    (* conditions *)
-    (exists s' msg, ev0 (to_src0 p) = (s', VError msg)) \/ ev0 (to_src0 p) = ev0 p.
-Proof.
-  unfold ev0. unfold to_src0. intros p.
-  edestruct correctness_of_interpretation_rec with (n:=101) (fuel:=100) (p:=p). omega.
-  left. eapply H.
-  right. eapply H.
-Qed.
