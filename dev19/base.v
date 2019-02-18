@@ -1,5 +1,9 @@
+Require Import Arith.
 Require Import String.
 Require Import List.
+Export List ListNotations.
+Open Scope list_scope.
+Open Scope string_scope.
 Require Import Omega.
 
 Inductive exp :=
@@ -9,18 +13,26 @@ Inductive exp :=
 | ELet (e1 e2: exp)
 | ELift (e1: exp)
 | ERun (e0 e1: exp)
-| EError (msg: string).
+| ENat (n: nat)
+| EStr (t: string)
+| EIf (e0 e1 e2: exp)
+| EOp (op: string) (es: list exp)
+| EError (msg: string)
+.
 
 Inductive val :=
 | VClo (env: list val) (e0: exp)
 | VCode (e0: exp)
+| VNat (n: nat)
+| VStr (t: string)
+| VPair (va vd: val)
 | VError (msg: string)
 .
 
 Fixpoint index {X : Type} (n : nat) (l : list X) : option X :=
   match l with
     | nil => None
-    | a :: l'  => if beq_nat n (length l') then Some a else index n l'
+    | cons a l'  => if beq_nat n (length l') then Some a else index n l'
   end.
 
 Definition state := (nat * list exp)%type.
@@ -42,6 +54,8 @@ Definition reify (se: state * exp) :=
 
 Fixpoint anf (s: state) (env: list exp) (e: exp): (state * exp) :=
   match e with
+  | ENat n => (s, ENat n)
+  | EStr t => (s, EStr t)
   | EVar n => (s, match index n env with
                   | Some v => v
                   | None => EError "unbound var"
@@ -66,6 +80,21 @@ Fixpoint anf (s: state) (env: list exp) (e: exp): (state * exp) :=
   | ELet e1 e2 =>
     match anf s env e1 with
     | (s1, v1) => anf s1 (v1::env) e2
+    end
+  | EIf e0 e1 e2 =>
+    match anf s env e0 with
+    | (s0, v0) =>
+      reflect s0 (EIf v0
+               (reify (anf (fst s0,nil) env e1))
+               (reify (anf (fst s0,nil) env e2)))
+    end
+  | EOp op es =>
+    match (fold_right
+             (fun e1 r1 =>
+                match anf (fst r1) env e1 with
+                | (s1, v1) => (s1, v1::(snd r1))
+                end) (s, nil) es) with
+    | (s, vs) => reflect s (EOp op vs)
     end
   | ELift e1 =>
     match anf s env e1 with
@@ -109,6 +138,13 @@ Fixpoint lift (s: state) (fuel: nat) (v: val): (state * exp) :=
   | 0 => (s, EError "run out of fuel")
   | S fuel =>
     match v with
+    | VNat n => (s, ENat n)
+    | VStr t => (s, EStr t)
+    | VPair v1 v2 =>
+      match (v1, v2) with
+      | (VCode e1, VCode e2) => reflect s (EOp "cons" [e1;e2])
+      | _ => (s, EError "expected code")
+      end
     | VClo env0 e0 =>
       match fresh s with
       | (s1,v1) =>
@@ -130,6 +166,8 @@ with ev (s: state) (fuel: nat) (env: list val) (e: exp): (state * val) :=
   | 0 => (s, VError "run out of fuel")
   | S fuel =>
     match e with
+    | ENat n => (s, VNat n)
+    | EStr t => (s, VStr t)
     | EVar n =>
       match index n env with
       | Some v => (s, v)
@@ -149,13 +187,63 @@ with ev (s: state) (fuel: nat) (env: list val) (e: exp): (state * val) :=
         | (s2, VCode e2) => reflectc s2 (EApp e1 e2)
         | (s2, _) => (s2, VError "expected code")
         end
-      (*| (s0, _) => (s0, VError "app expected function")*)
+      | (s0, _) => (s0, VError "app expected function")
       end
     | ELam e0 => (s, VClo env e0)
     | ELet e1 e2 =>
       match ev s fuel env e1 with
       | (s1, VError msg) => (s1, VError msg)
       | (s1, v1) => ev s1 fuel (v1::env) e2
+      end
+    | EIf e0 e1 e2 =>
+      match ev s fuel env e0 with
+      | (s0, VNat (S _)) => ev s0 fuel env e1
+      | (s0, VNat 0) => ev s0 fuel env e2
+      | (s0, VCode v0) =>
+        reflectc s0 (EIf v0
+                         (reifyc (ev s0 fuel env e1))
+                         (reifyc (ev s0 fuel env e2)))
+      | (s0, _) => (s0, VError "expected nat")
+      end
+    | EOp op es =>
+      match (fold_right
+               (fun e1 r1 =>
+                  match ev (fst r1) fuel env e1 with
+                  | (s1, v1) => (s1, v1::(snd r1))
+                  end) (s, []) es) with
+      | (s, vs) =>
+        match (op, vs) with
+        | ("cons", [v1;v2]) => (s, VPair v1 v2)
+        | ("car", [VPair va vd]) => (s, va)
+        | ("cdr", [VPair va vd]) => (s, vd)
+        | ("+", [VNat n1; VNat n2]) => (s, VNat (n1 + n2))
+        | ("-", [VNat n1; VNat n2]) => (s, VNat (n1 - n2))
+        | ("*", [VNat n1; VNat n2]) => (s, VNat (n1 * n2))
+        | (_, [VCode v1]) => reflectc s (EOp op [v1])
+        | (_, [VCode v1; VCode v2]) => reflectc s (EOp op [v1;v2])
+        | ("eq?", [v1;v2]) => (s, VNat (
+          match (v1,v2) with
+          | (VNat n1, VNat n2) => if (beq_nat n1 n2) then 1 else 0
+          | (VStr t1, VStr t2) => if (string_dec t1 t2) then 1 else 0
+          | _ => 0
+          end))
+        | ("num?", [v1]) =>
+          (s, VNat (match v1 with
+                    | VNat _ => 1
+                    | _ => 0
+                    end))
+        | ("sym?", [v1]) =>
+          (s, VNat (match v1 with
+                    | VStr _ => 1
+                    | _ => 0
+                    end))
+        | ("pair?", [v1]) =>
+          (s, VNat (match v1 with
+                    | VPair _ _ => 1
+                    | _ => 0
+                    end))
+        | _ => (s, VError "unexpected op")
+        end
       end
     | ELift e1 =>
       match ev s fuel env e1 with
@@ -203,6 +291,10 @@ Fixpoint to_lifted (e: exp): exp :=
   | ELet e1 e2 => ELet (to_lifted e1) (to_lifted e2)
   | ELift e1 => EError "liftlam: lift not allowed"
   | ERun e0 e1 => EError "liftlam: run not allowed"
+  | ENat n => ELift e
+  | EStr t => ELift e
+  | EIf e0 e1 e2 => EIf (to_lifted e0) (to_lifted e1) (to_lifted e2)
+  | EOp op es => EOp op (map to_lifted es)
   | EError msg => e
   end.
 
@@ -210,9 +302,9 @@ Eval vm_compute in (anf0 (ELam (ELam (EApp (EVar 3) (EVar 1))))).
 (* ELet (ELam (ELet (ELam (ELet (EApp (EVar 3) (EVar 1)) (EVar 4))) (EVar 2))) (EVar 0) *)
 Eval vm_compute in (reifyc (ev0 (to_lifted (ELam (ELam (EApp (EVar 3) (EVar 1))))))).
 
-Lemma env_inv1_extend: forall env1 x1,
-  (forall n v1, index n env1 = Some v1 -> exists x, v1 = VCode (EVar x)) ->
-  (forall n v1, index n ((VCode (EVar x1))::env1) = Some v1 -> exists x, v1 = VCode (EVar x)).
+Lemma env_inv1_extend: forall env1 e1,
+  (forall n v1, index n env1 = Some v1 -> exists e, v1 = VCode e) ->
+  (forall n v1, index n ((VCode e1)::env1) = Some v1 -> exists e, v1 = VCode e).
 Proof.
   intros.
   simpl in H0.
@@ -221,10 +313,10 @@ Proof.
   rewrite E in H0. eapply H. eapply H0.
 Qed.
 
-Lemma env_inv2_extend: forall env1 env2 x1,
+Lemma env_inv2_extend: forall env1 env2 e1,
     (length env1 = length env2) ->
-    (forall n x, index n env1 = Some (VCode (EVar x)) -> index n env2 = Some (EVar x)) ->
-    (forall n x, index n ((VCode (EVar x1))::env1) = Some (VCode (EVar x)) -> index n ((EVar x1)::env2) = Some (EVar x)).
+    (forall n e, index n env1 = Some (VCode e) -> index n env2 = Some e) ->
+    (forall n e, index n ((VCode e1)::env1) = Some (VCode e) -> index n (e1::env2) = Some e).
 Proof.
   intros.
   simpl in H1.
@@ -237,10 +329,10 @@ Qed.
 
 Theorem anf_like_lift: forall n, forall fuel, fuel < n -> forall e s env1 env2,
     (length env1 = length env2) ->
-    (forall n v1, index n env1 = Some v1 -> exists x, v1 = VCode (EVar x)) ->
-    (forall n x, index n env1 = Some (VCode (EVar x)) -> index n env2 = Some (EVar x)) ->
+    (forall n v1, index n env1 = Some v1 -> exists e, v1 = VCode e) ->
+    (forall n e, index n env1 = Some (VCode e) -> index n env2 = Some e) ->
     (exists s' msg, (ev s fuel env1 (to_lifted e)) = (s', VError msg)) \/
-    (exists s' n', (ev s fuel env1 (to_lifted e)) = (s', VCode (EVar n')) /\ (anf s env2 e) = (s', (EVar n'))).
+    (exists s' e', (ev s fuel env1 (to_lifted e)) = (s', VCode e') /\ (anf s env2 e) = (s', e')).
 Proof.
   intros nMax. induction nMax; intros fuel Hfuel.
   inversion Hfuel.
@@ -286,7 +378,7 @@ Proof.
     rewrite Herr. left. repeat eexists.
     destruct H2 as [s' [n' [Hev1 Ha1]]].
     rewrite Hev1. rewrite Ha1.
-    edestruct IHnMax with (env1:=(VCode (EVar n') :: env1)) (env2:=(EVar n' :: env2)).
+    edestruct IHnMax with (env1:=(VCode n' :: env1)) (env2:=(n' :: env2)).
     instantiate (1:=fuel). omega.
     simpl. omega.
     apply env_inv1_extend. auto.
@@ -297,8 +389,18 @@ Proof.
     rewrite Hev2. rewrite Ha2. right. repeat eexists.
   - simpl. left. repeat eexists.
   - simpl. left. repeat eexists.
+  - simpl.
+    destruct fuel as [|fuel].
+    simpl. left. repeat eexists.
+    simpl. right. exists s. exists (ENat n). split. reflexivity. reflexivity.
+  - simpl.
+    destruct fuel as [|fuel].
+    simpl. left. repeat eexists.
+    simpl. right. exists s. exists (EStr t). split. reflexivity. reflexivity.
+  - (* if *) admit.
+  - (* op *) admit.
   - simpl. left. repeat eexists.
-Qed.
+Admitted.
 
 Theorem anf_like_lift0: forall e,
     (exists msg, reifyc (ev0 (to_lifted e)) = EError msg) \/ reifyc (ev0 (to_lifted e)) = anf0 e.
