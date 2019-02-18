@@ -6,6 +6,22 @@ Open Scope list_scope.
 Open Scope string_scope.
 Require Import Omega.
 
+Inductive op1 :=
+| OCar
+| OCdr
+| OIsNat
+| OIsStr
+| OIsPair
+.
+
+Inductive op2 :=
+| OCons
+| OEq
+| OPlus
+| OMinus
+| OTimes
+.
+
 Inductive exp :=
 | EVar (n: nat)
 | EApp (e1 e2: exp)
@@ -16,7 +32,8 @@ Inductive exp :=
 | ENat (n: nat)
 | EStr (t: string)
 | EIf (e0 e1 e2: exp)
-| EOp (op: string) (es: list exp)
+| EOp1 (op: op1) (e1: exp)
+| EOp2 (op: op2) (e1 e2: exp)
 | EError (msg: string)
 .
 
@@ -88,13 +105,16 @@ Fixpoint anf (s: state) (env: list exp) (e: exp): (state * exp) :=
                (reify (anf (fst s0,nil) env e1))
                (reify (anf (fst s0,nil) env e2)))
     end
-  | EOp op es =>
-    match (fold_right
-             (fun e1 r1 =>
-                match anf (fst r1) env e1 with
-                | (s1, v1) => (s1, v1::(snd r1))
-                end) (s, nil) es) with
-    | (s, vs) => reflect s (EOp op vs)
+  | EOp1 op e1 =>
+    match anf s env e1 with
+    | (s, v1) => reflect s (EOp1 op v1)
+    end
+    | EOp2 op e1 e2 =>
+    match anf s env e1 with
+    | (s, v1) =>
+      match anf s env e2 with
+      | (s, v2) => reflect s (EOp2 op v1 v2)
+      end
     end
   | ELift e1 =>
     match anf s env e1 with
@@ -142,7 +162,7 @@ Fixpoint lift (s: state) (fuel: nat) (v: val): (state * exp) :=
     | VStr t => (s, EStr t)
     | VPair v1 v2 =>
       match (v1, v2) with
-      | (VCode e1, VCode e2) => reflect s (EOp "cons" [e1;e2])
+      | (VCode e1, VCode e2) => reflect s (EOp2 OCons e1 e2)
       | _ => (s, EError "expected code")
       end
     | VClo env0 e0 =>
@@ -209,44 +229,47 @@ with ev (s: state) (fuel: nat) (env: list val) (e: exp): (state * val) :=
       | (s0, VError msg) => (s0, VError msg)
       | (s0, _) => (s0, VError "expected nat")
       end
-    | EOp op es =>
-      match (fold_right
-               (fun e1 r1 =>
-                  match ev (fst r1) fuel env e1 with
-                  | (s1, v1) => (s1, v1::(snd r1))
-                  end) (s, []) es) with
-      | (s, vs) =>
-        match (op, vs) with
-        | ("cons", [v1;v2]) => (s, VPair v1 v2)
-        | ("car", [VPair va vd]) => (s, va)
-        | ("cdr", [VPair va vd]) => (s, vd)
-        | ("+", [VNat n1; VNat n2]) => (s, VNat (n1 + n2))
-        | ("-", [VNat n1; VNat n2]) => (s, VNat (n1 - n2))
-        | ("*", [VNat n1; VNat n2]) => (s, VNat (n1 * n2))
-        | (_, [VCode v1]) => reflectc s (EOp op [v1])
-        | (_, [VCode v1; VCode v2]) => reflectc s (EOp op [v1;v2])
-        | ("eq?", [v1;v2]) => (s, VNat (
-          match (v1,v2) with
-          | (VNat n1, VNat n2) => if (beq_nat n1 n2) then 1 else 0
-          | (VStr t1, VStr t2) => if (string_dec t1 t2) then 1 else 0
-          | _ => 0
-          end))
-        | ("num?", [v1]) =>
-          (s, VNat (match v1 with
-                    | VNat _ => 1
-                    | _ => 0
-                    end))
-        | ("sym?", [v1]) =>
-          (s, VNat (match v1 with
-                    | VStr _ => 1
-                    | _ => 0
-                    end))
-        | ("pair?", [v1]) =>
-          (s, VNat (match v1 with
-                    | VPair _ _ => 1
-                    | _ => 0
-                    end))
+    | EOp1 op e1 =>
+      match ev s fuel env e1 with
+      | (s, v1) =>
+        match (op, v1) with
+        | (_, VError msg) => (s, VError msg)
+        | (_, VCode v1) => reflectc s (EOp1 op v1)
+        | (OCar, VPair va vd) => (s, va)
+        | (OCdr, VPair va vd) => (s, vd)
+        | (OIsNat, VNat _) => (s, VNat 1)
+        | (OIsNat, _) => (s, VNat 0)
+        | (OIsStr, VStr _) => (s, VNat 1)
+        | (OIsStr, _) => (s, VNat 0)
+        | (OIsPair, VPair _ _) => (s, VNat 1)
+        | (OIsPair, _) => (s, VNat 0)
         | _ => (s, VError "unexpected op")
+        end
+      end
+    | EOp2 op e1 e2 =>
+      match ev s fuel env e1 with
+      | (s, v1) =>
+        match ev s fuel env e2 with
+        | (s, v2) =>
+          match (op, v1, v2) with
+          | (_, VError msg, _) => (s, VError msg)
+          | (_, _, VError msg) => (s, VError msg)
+          | (_, VCode v1, VCode v2) => reflectc s (EOp2 op v1 v2)
+          | (_, VCode v1, _) => (s, VError "stage error")
+          | (_, _, VCode v2) => (s, VError "stage error")
+          | (OCons, v1, v2) => (s, VPair v1 v2)
+          | (OPlus, VNat n1, VNat n2) => (s, VNat (n1 + n2))
+          | (OMinus, VNat n1, VNat n2) => (s, VNat (n1 - n2))
+          | (OTimes, VNat n1, VNat n2) => (s, VNat (n1 * n2))
+          | (OEq, v1, v2) =>
+            (s, VNat (
+                    match (v1,v2) with
+                    | (VNat n1, VNat n2) => if (beq_nat n1 n2) then 1 else 0
+                    | (VStr t1, VStr t2) => if (string_dec t1 t2) then 1 else 0
+                    | _ => 0
+                    end))
+          | _ => (s, VError "unexpected op")
+          end
         end
       end
     | ELift e1 =>
@@ -298,7 +321,8 @@ Fixpoint to_lifted (e: exp): exp :=
   | ENat n => ELift e
   | EStr t => ELift e
   | EIf e0 e1 e2 => EIf (to_lifted e0) (to_lifted e1) (to_lifted e2)
-  | EOp op es => EOp op (map to_lifted es)
+  | EOp1 op e1 => EOp1 op (to_lifted e1)
+  | EOp2 op e1 e2 => EOp2 op (to_lifted e1) (to_lifted e2)
   | EError msg => e
   end.
 
@@ -418,7 +442,8 @@ Proof.
     destruct H2 as [? [? [Hev2 Ha2]]].
     rewrite Hev2. rewrite Ha2.
     right. simpl. repeat eexists.
-  - (* op *) admit.
+  - simpl. admit.
+  - simpl. admit.
   - simpl. left. repeat eexists.
 Admitted.
 
