@@ -268,7 +268,7 @@ with ev (s: state) (fuel: nat) (env: list val) (e: exp): (state * val) :=
                     | (VStr t1, VStr t2) => if (string_dec t1 t2) then 1 else 0
                     | _ => 0
                     end))
-          | _ => (s, VError "unexpected op")
+          | _ => (s, VError "unexpected op ")
           end
         end
       end
@@ -499,3 +499,96 @@ Section test_factorial.
   Definition fac_anf := Eval vm_compute in anf0 fac.
   Print fac_anf.
 End test_factorial.
+
+
+Definition n_l := 1.
+Definition n_ev := 2.
+Definition n_exp := 3.
+Definition n_env := 5.
+Definition n_end := n_env.
+
+Definition evl :=
+(ELam (ELam (ELam
+   (EIf (EOp1 OIsNat (EVar n_exp)) (EApp (EVar n_l) (EVar n_exp))
+   (EIf (EOp1 OIsStr (EVar n_exp)) (EApp (EVar n_env) (EVar n_exp))
+   (EIf (EOp2 OEq (EStr "quote") (EOp1 OCar (EVar n_exp))) (EApp (EVar n_l) (EOp1 OCar (EOp1 OCdr (EVar n_exp))))
+   (EIf (EOp2 OEq (EStr "plus")  (EOp1 OCar (EVar n_exp))) (EOp2 OPlus  (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar n_env)) (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EOp1 OCdr (EVar n_exp))))) (EVar n_env)))
+   (EIf (EOp2 OEq (EStr "minus") (EOp1 OCar (EVar n_exp))) (EOp2 OMinus (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar n_env)) (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EOp1 OCdr (EVar n_exp))))) (EVar n_env)))
+   (EIf (EOp2 OEq (EStr "times") (EOp1 OCar (EVar n_exp))) (EOp2 OTimes (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar n_env)) (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EOp1 OCdr (EVar n_exp))))) (EVar n_env)))
+   (EIf (EOp2 OEq (EStr "eq")    (EOp1 OCar (EVar n_exp))) (EOp2 OEq    (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar n_env)) (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EOp1 OCdr (EVar n_exp))))) (EVar n_env)))
+   (EIf (EOp2 OEq (EStr "if")    (EOp1 OCar (EVar n_exp))) (EIf (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar n_env)) (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EOp1 OCdr (EVar n_exp))))) (EVar n_env)) (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EOp1 OCdr (EOp1 OCdr (EVar n_exp)))))) (EVar n_env)))
+   (EIf (EOp2 OEq (EStr "lam")   (EOp1 OCar (EVar n_exp))) (EApp (EVar n_l) (ELam (*"f" "x"*) (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EOp1 OCdr (EOp1 OCdr (EVar n_exp)))))) (ELam (*"_" "y"*) (EIf (EOp2 OEq (EVar (n_end+4)(*y*)) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar (n_end+1)(*f*)) (EIf (EOp2 OEq (EVar (n_end+4)(*y*)) (EOp1 OCar (EOp1 OCdr (EOp1 OCdr (EVar n_exp))))) (EVar (n_end+2)(*x*)) (EApp (EVar n_env) (EVar (n_end+4)(*y*)))))))))
+   (EIf (EOp2 OEq (EStr "let")   (EOp1 OCar (EVar n_exp))) (ELet (*"x"*) (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EOp1 OCdr (EVar n_exp))))) (EVar n_env)) (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EOp1 OCdr (EOp1 OCdr (EVar n_exp)))))) (ELam (*"_" "y"*) (EIf (EOp2 OEq (EVar (n_end+3)(*y*)) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar (n_end+1)(*x*)) (EApp (EVar n_env) (EVar (n_end+3)(*y*)))))))
+   (EIf (EOp2 OEq (EStr "lift")  (EOp1 OCar (EVar n_exp))) (ELift  (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar n_env)))
+   (EIf (EOp2 OEq (EStr "isNat") (EOp1 OCar (EVar n_exp))) (EOp1 OIsNat (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar n_env)))
+   (EIf (EOp2 OEq (EStr "isStr") (EOp1 OCar (EVar n_exp))) (EOp1 OIsStr (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar n_env)))
+   (EIf (EOp2 OEq (EStr "cons")  (EOp1 OCar (EVar n_exp))) (EApp (EVar n_l) (EOp2 OCons  (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar n_env)) (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EOp1 OCdr (EVar n_exp))))) (EVar n_env))))
+   (EIf (EOp2 OEq (EStr "car")   (EOp1 OCar (EVar n_exp))) (EOp1 OCar (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar n_env)))
+   (EIf (EOp2 OEq (EStr "cdr")   (EOp1 OCar (EVar n_exp))) (EOp1 OCdr (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar n_env)))
+   (EIf (EOp2 OEq (EStr "app")   (EOp1 OCar (EVar n_exp))) (EApp (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar n_env)) (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EOp1 OCdr (EVar n_exp))))) (EVar n_env)))
+   (EStr "error")
+)))))))))))))))))))).
+
+Eval vm_compute in (ev0 (EApp (EApp (EApp evl (ELam (EVar 1))) (ENat 5)) (ELam (EError "unbound")))).
+Eval vm_compute in (ev0 (EApp (EApp (EApp evl (ELam (EVar 1))) (EOp2 OCons (EStr "cons") (EOp2 OCons (ENat 5) (EOp2 OCons (ENat 6) (EStr "."))))) (ELam (EError "unbound")))).
+Eval vm_compute in (ev0 (EApp (EApp (EApp evl (ELam (EVar 1))) (EOp2 OCons (EStr "app") (EOp2 OCons (EOp2 OCons (EStr "lam") (EOp2 OCons (EStr "_") (EOp2 OCons (EStr "x") (EOp2 OCons (EOp2 OCons (EStr "plus") (EOp2 OCons (EStr "x") (EOp2 OCons (ENat 1) (EStr ".")))) (EStr "."))))) (EOp2 OCons (ENat 2) (EStr (".")))))) (ELam (EError "unbound")))).
+
+Definition op1_to_src (o: op1) := EStr (
+  match o with
+  | OCar => "car"
+  | OCdr => "cdr"
+  | OIsNat => "isNat"
+  | OIsStr => "isStr"
+  | OIsPair => "isPair"
+  end).
+
+Definition op2_to_src (o: op2) := EStr (
+  match o with
+  | OCons => "cons"
+  | OEq => "eq"
+  | OPlus => "plus"
+  | OMinus => "minus"
+  | OTimes => "times"
+  end).
+
+Definition ECons a b := EOp2 OCons a b.
+
+Fixpoint to_src (names: list string) (env: list string) (p: exp): exp :=
+  match p with
+  | EVar x =>
+    match index x env with
+    | None => EError "unbound var"
+    | Some t => EStr t
+    end
+  | ELam body =>
+    match names with
+    | [] => EError "name ran out"
+    | f::names =>
+      match names with
+      | [] => EError "name ran out"
+      | x::names => ECons (EStr "lam") (ECons (EStr f) (ECons (EStr x) (ECons (to_src names (x::f::env) body) (EStr "."))))
+      end
+    end
+  | ENat n => ENat n
+  | EStr s => ECons (EStr "quote") (ECons (EStr s) (EStr "."))
+  | ELet e1 e2 =>
+    match names with
+    | [] => EError "name ran out"
+    | x1::names => ECons (EStr "let") (ECons (EStr x1) (ECons (to_src names env e1) (ECons (to_src names env e2) (EStr "."))))
+    end
+  | EApp e1 e2 => ECons (EStr "app") (ECons (to_src names env e1) (ECons (to_src names env e2) (EStr ".")))
+  | EIf e0 e1 e2 => ECons (EStr "if") (ECons (to_src names env e0) (ECons (to_src names env e1) (ECons (to_src names env e2) (EStr "."))))
+  | EOp1 o e1 => ECons (op1_to_src o) (ECons (to_src names env e1) (EStr "."))
+  | EOp2 o e1 e2 => ECons (op2_to_src o) (ECons (to_src names env e1) (ECons (to_src names env e2) (EStr ".")))
+  | ELift e1 => ECons (EStr "lift") (ECons (to_src names env e1) (EStr "."))
+  | ERun e0 e1 => ECons (EStr "run") (ECons (to_src names env e0) (ECons (to_src names env e1) (EStr ".")))
+  | EError msg => EError msg
+end.
+
+Definition to_src0 e :=
+  to_src
+    ["x1";"x2";"x3";"x4";"x5";"x6";"x7";"x8";"x9";"x10";"x11";"x12"]
+    []
+    e.
+Definition fac4_src := Eval vm_compute in to_src0 (EApp fac (ENat 4)).
+Eval vm_compute in (ev (0,[]) 1000 [] (EApp (EApp (EApp evl (ELam (EVar 1))) fac4_src) (ELam (EError "unbound")))).
