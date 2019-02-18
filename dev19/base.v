@@ -200,9 +200,13 @@ with ev (s: state) (fuel: nat) (env: list val) (e: exp): (state * val) :=
       | (s0, VNat (S _)) => ev s0 fuel env e1
       | (s0, VNat 0) => ev s0 fuel env e2
       | (s0, VCode v0) =>
-        reflectc s0 (EIf v0
-                         (reifyc (ev s0 fuel env e1))
-                         (reifyc (ev s0 fuel env e2)))
+        match ((ev (fst s0,nil) fuel env e1),
+               (ev (fst s0,nil) fuel env e2)) with
+        | ((_, VError msg), _) => (s0, VError msg)
+        | (_, (_, VError msg)) => (s0, VError msg)
+        | (r1, r2) => reflectc s0 (EIf v0 (reifyc r1) (reifyc r2))
+        end
+      | (s0, VError msg) => (s0, VError msg)
       | (s0, _) => (s0, VError "expected nat")
       end
     | EOp op es =>
@@ -397,7 +401,23 @@ Proof.
     destruct fuel as [|fuel].
     simpl. left. repeat eexists.
     simpl. right. exists s. exists (EStr t). split. reflexivity. reflexivity.
-  - (* if *) admit.
+  - simpl.
+    edestruct IHnMax; eauto. instantiate (1:=fuel). omega. instantiate (1:=e1) in H2. destruct H2 as [s1 [msg Herr]].
+    rewrite Herr. left. repeat eexists.
+    destruct H2 as [? [? [Hev Ha]]].
+    rewrite Hev. rewrite Ha.
+    unfold reflectc. unfold reflect. destruct x. simpl.
+    edestruct IHnMax with (fuel:=fuel) (e:=e2) (s:=(n,[]):state); eauto.
+    omega. destruct H2 as [? [msg Herr]]. rewrite Herr.
+    left. repeat eexists.
+    destruct H2 as [? [? [Hev1 Ha1]]].
+    rewrite Hev1. rewrite Ha1.
+    edestruct IHnMax with (fuel:=fuel) (e:=e3) (s:=(n,[]):state); eauto.
+    omega. destruct H2 as [? [msg Herr]]. rewrite Herr.
+    left. repeat eexists.
+    destruct H2 as [? [? [Hev2 Ha2]]].
+    rewrite Hev2. rewrite Ha2.
+    right. simpl. repeat eexists.
   - (* op *) admit.
   - simpl. left. repeat eexists.
 Admitted.
