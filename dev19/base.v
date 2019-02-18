@@ -684,7 +684,10 @@ Proof.
     simpl in Hev2. inversion Hev2. subst. simpl in Hev3.
     simpl in Hev1. inversion Hev1. subst. rewrite <- Hev3. reflexivity.
     simpl. subst. simpl. simpl in Hev2. inversion Hev2. subst. simpl in Heqrx1b. inversion Heqrx1b. reflexivity.
-    admit.
+    destruct Hec as [? [? [? [? [Hc1 [Hcl Hc2]]]]]].
+    destruct fuel as [| fuel].
+    simpl in Hcl. inversion Hcl.
+    simpl in Hcl. inversion Hcl.
   - simpl. admit.
   - simpl. admit.
   - simpl. admit.
