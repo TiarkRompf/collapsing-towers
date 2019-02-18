@@ -450,9 +450,26 @@ Proof.
     rewrite Hev. rewrite Ha.
     unfold reflectc. unfold reflect. destruct s'. simpl.
     destruct op; right; repeat eexists.
-  - simpl. admit.
+  - simpl.
+    edestruct IHnMax with (fuel:=fuel) (e:=e1); eauto. omega.
+    destruct H2 as [? [msg Herr]]. rewrite Herr.
+    edestruct IHnMax with (fuel:=fuel) (e:=e2); eauto. omega.
+    destruct H2 as [? [? Herr2]]. rewrite Herr2.
+    destruct op; left; repeat eexists; reflexivity.
+    destruct H2 as [? [? [Hev2 Ha2]]].
+    rewrite Hev2.
+    destruct op; left; repeat eexists; reflexivity.
+    destruct H2 as [? [? [Hev Ha]]].
+    rewrite Hev. rewrite Ha.
+    edestruct IHnMax with (fuel:=fuel) (e:=e2); eauto. omega.
+    destruct H2 as [? [? Herr2]]. rewrite Herr2.
+    destruct op; left; repeat eexists; reflexivity.
+    destruct H2 as [? [? [Hev2 Ha2]]].
+    rewrite Hev2. rewrite Ha2.
+    unfold reflectc. unfold reflect. destruct x1. simpl.
+    destruct op; right; repeat eexists.
   - simpl. left. repeat eexists.
-Admitted.
+Qed.
 
 Theorem anf_like_lift0: forall e,
     (exists msg, reifyc (ev0 (to_lifted e)) = EError msg) \/ reifyc (ev0 (to_lifted e)) = anf0 e.
