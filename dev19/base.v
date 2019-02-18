@@ -613,7 +613,18 @@ Lemma inv_app: forall s fuel env e1 e2 r,
       ev s fuel env e1 = (s0, VCode v1) /\
       ev s0 fuel env e2 = (s2, VCode v2) /\
       reflectc s2 (EApp v1 v2) = r).
-Proof. Admitted.
+Proof.
+  intros. simpl in H.
+  remember (ev s fuel env e1) as r1.
+  destruct r1 as [s0 v0].
+  remember (ev s0 fuel env e2) as r2.
+  destruct r2 as [s2 v2].
+  destruct v0; try solve [
+                     destruct v2; try solve [right; left; repeat eexists; [symmetry; eapply Heqr2 | subst; reflexivity]];
+                     try solve [left; repeat eexists; subst; reflexivity]].
+  destruct v2; try solve [left; repeat eexists; subst; reflexivity].
+  right. right. repeat eexists. symmetry. eapply Heqr2. eapply H.
+Qed.
 
 Lemma inv_app_lam: forall s fuel env e0 e2 r,
     ev s (S fuel) env (EApp (ELam e0) e2) = r ->
