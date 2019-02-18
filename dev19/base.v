@@ -592,3 +592,12 @@ Definition to_src0 e :=
     e.
 Definition fac4_src := Eval vm_compute in to_src0 (EApp fac (ENat 4)).
 Eval vm_compute in (ev (0,[]) 1000 [] (EApp (EApp (EApp evl (ELam (EVar 1))) fac4_src) (ELam (EError "unbound")))).
+
+(* Proposition 4.2 (Correctness of Interpretation). For any Pink program p, evaluating its
+source is observationally equivalent to the program itself: ⟦ (eval p-src) ⟧ ≡ ⟦ p ⟧. *)
+
+(* Proposition 4.3 (Correctness of Compilation). For any Pink program p, compiling and running
+its source is observationally equivalent to the program itself: ⟦ (run 0 (evalc p-src)) ⟧ ≡ ⟦ p ⟧. *)
+
+(* Proposition 4.4 (Optimality of Compilation). For any Pink program p, compiling its source
+yields exactly the program itself (in ANF): ⟦ (evalc p-src) ⟧ ⇓ ⟦ p ⟧. *)
