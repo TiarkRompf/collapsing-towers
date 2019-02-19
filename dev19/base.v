@@ -825,8 +825,22 @@ Proof.
   - admit.
 Admitted.
 
+Lemma error_or_not: forall p,
+    (exists msg, p = VError msg) \/ (forall msg, p <> VError msg).
+Proof.
+  intros. destruct p;
+            try solve [left; eexists; reflexivity];
+            try solve [right; intros; congruence].
+Qed.
 
- (*
+Lemma src_to_val_not: forall p_src,
+    (forall env0 e0, src_to_val p_src <> VClo env0 e0) /\
+    (forall e0, src_to_val p_src <> VCode e0).
+Proof.
+  destruct 0; simpl; split; congruence.
+Qed.
+
+(*
 Lemma correctness_of_interpretation_loop: forall n, forall fuel, fuel < n ->
    forall p s names r,
      ev s fuel [VClo [VClo [] (EVar 1);VNat 0] (ELam (ELam evl_body));VClo [] (EVar 1);VNat 0] (EApp (EVar n_ev) (to_src names [] p)) = r ->
@@ -847,9 +861,31 @@ Proof.
   - admit.
   - admit.
   - admit.
+  - admit.
   - cbv [to_src] in H. fold to_src in H. cbv [ev] in H. fold ev in H.
     destruct fuel as [|fuel].
-    admit.
+    simpl in H. left. repeat eexists. subst. reflexivity.
+    simpl in H.
+    destruct fuel as [| fuel].
+    simpl in H. left. repeat eexists. subst. reflexivity.
+    simpl in H.
+    edestruct ev_to_src with (p:=p) (fuel:=fuel) (n:=S fuel). omega. auto.
+    destruct H0 as [? Herr1].
+    rewrite <- Herr1 in H. left. repeat eexists. subst. reflexivity.
+    rewrite <- H0 in H.
+    destruct error_or_not with (p:=src_to_val (to_src names [] p)).
+    destruct H1 as [? Herr1].
+    rewrite Herr1 in H. left. repeat eexists. subst. reflexivity.
+    remember (src_to_val (to_src names [] p)) as v1.
+    destruct fuel as [| fuel].
+    simpl in H. destruct v1;
+                  try solve [left; repeat eexists; subst; reflexivity].
+    simpl in H.
+    destruct src_to_val_not with (p_src:=to_src names [] p).
+    destruct v1;
+      try solve [left; repeat eexists; subst; reflexivity].
+    
+    edestruct ev_to_src with (p:=p2) (fuel:=fuel) (n:=S fuel). omega. auto.
     remember (ev s (S fuel) [VClo [VClo [] (EVar 1); VNat 0] (ELam (ELam evl_body)); VClo [] (EVar 1); VNat 0] (EVar n_ev)) as A.
     simpl in HeqA. rewrite HeqA in H.
     remember (ev s (S fuel) [VClo [VClo [] (EVar 1); VNat 0] (ELam (ELam evl_body)); VClo [] (EVar 1); VNat 0] (ECons (op1_to_src op) (ECons (to_src names [] p) (EStr ".")))) as B.
