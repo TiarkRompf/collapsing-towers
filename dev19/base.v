@@ -871,7 +871,6 @@ Proof.
   simpl in H.
   destruct fuel.
   simpl in H. left. subst. repeat eexists.
-  simpl in H.
   destruct p.
   - simpl in H.
     destruct fuel.
@@ -897,29 +896,89 @@ Proof.
   - admit.
   - admit.
   - admit.
-  - destruct fuel as [|fuel].
+  - simpl in H.
+    destruct fuel as [|fuel].
     simpl in H. left. subst. repeat eexists.
     rewrite ev_var with (n:=2) (v:=Vev) in H.
     unfold Vev in H. fold Vev in H.
     rewrite ev_var with (n:=3) (v:=src_to_val (to_src names [] (EOp1 op p))) in H.
     cbv [to_src] in H. fold to_src in H. cbv [src_to_val] in H.
+    match goal with
+      | [ H : (let (s, v) := ev ?s1 (S ?fuel1) ?env1 ?e1 in ?body1) = r |- _ ] =>
+        remember (ev s1 (S fuel1) env1 e1) as p0;
+          simpl in Heqp0;
+          rewrite Heqp0 in H;
+          clear Heqp0; clear p0
+    end.
+    unfold evl_body in H.
+    match goal with
+      | [ H : (let (s, v) := ev ?s1 (S ?fuel1) ?env1 ?e1 in ?body1) = r |- _ ] =>
+        remember (ev s1 (S fuel1) env1 e1) as p0;
+          simpl in Heqp0;
+          rewrite Heqp0 in H;
+          clear Heqp0; clear p0
+    end.
+    destruct fuel as [|fuel].
+    simpl in H. left. subst. repeat eexists.
+    match goal with
+      | [ H : (let (s, v) := let (s2, v2) := ev ?s1 (S ?fuel1) ?env1 ?e1 in ?body1 in ?body2) = r |- _ ] =>
+        remember (ev s1 (S fuel1) env1 e1) as p0;
+          simpl in Heqp0;
+          rewrite Heqp0 in H;
+          clear Heqp0; clear p0
+    end.
+    fold evl_body in H.
     simpl in H.
     destruct fuel as [|fuel].
     simpl in H. left. subst. repeat eexists.
-    simpl in H.
+    unfold n_exp in H.
+    match goal with
+      | [ H : (let (s, v) := let (s2, v2) := ev ?s1 (S ?fuel1) ?env1 ?e1 in ?body1 in ?body2) = r |- _ ] =>
+        remember (ev s1 (S fuel1) env1 e1) as p0;
+          simpl in Heqp0;
+          rewrite Heqp0 in H;
+          clear Heqp0; clear p0
+    end.
+    match goal with
+      | [ H : (let (s, v) := ev ?s1 (S ?fuel1) ?env1 ?e1 in ?body1) = r |- _ ] =>
+        remember (ev s1 (S fuel1) env1 e1) as p0;
+          simpl in Heqp0;
+          rewrite Heqp0 in H;
+          clear Heqp0; clear p0
+    end.
+    left. subst. repeat eexists.
+    match goal with
+      | [ H : (let (s, v) := ev ?s1 (S ?fuel1) ?env1 ?e1 in ?body1) = r |- _ ] =>
+        remember (ev s1 (S fuel1) env1 e1) as p0;
+          simpl in Heqp0;
+          rewrite Heqp0 in H;
+          clear Heqp0; clear p0
+    end.
     destruct fuel as [|fuel].
     simpl in H. left. subst. repeat eexists.
-    simpl in H.
-    destruct fuel as [|fuel].
+    match goal with
+      | [ H : (let (s, v) := let (s2, v2) := let (s3,v3) := ev ?s1 (S ?fuel1) ?env1 ?e1 in ?body1 in ?body2 in ?body3) = r |- _ ] =>
+        remember (ev s1 (S fuel1) env1 e1) as p0;
+          simpl in Heqp0;
+          rewrite Heqp0 in H;
+          clear Heqp0; clear p0
+    end.
+    destruct op.
+    admit.
+    admit.
+    admit.
+    admit.
+    admit.
+    simpl. reflexivity.
+    simpl. reflexivity.
+  - admit.
+  - simpl. simpl in H.
+    destruct fuel.
     simpl in H. left. subst. repeat eexists.
-    rewrite ev_str in H.
-    simpl in H.
+    simpl in H. left. subst. repeat eexists.
+Admitted.
 
-    (*here*)
-     left. subst. repeat eexists.
-    simpl.
-    
-    
+(*
  Lemma correctness_of_interpretation_loop: forall n, forall fuel, fuel < n ->
    forall p s names r,
      ev s fuel [VClo [VClo [] (EVar 1);VNat 0] (ELam (ELam evl_body));VClo [] (EVar 1);VNat 0] (EApp (EVar n_ev) (to_src names [] p)) = r ->
@@ -1081,3 +1140,4 @@ Proof.
   - simpl. admit.
   - admit. (*simpl. right. reflexivity.*)
 Admitted.
+*)
