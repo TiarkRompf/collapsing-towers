@@ -76,7 +76,7 @@ Fixpoint anf (s: state) (env: list exp) (e: exp): (state * exp) :=
   | EVar n => (s, match index n env with
                   | Some v => v
                   | None => EError "unbound var"
-                  end)        
+                  end)
   | EApp e1 e2 =>
     match anf s env e1 with
     | (s1, r1) =>
@@ -507,8 +507,7 @@ Definition n_exp := 3.
 Definition n_env := 5.
 Definition n_end := n_env.
 
-Definition evl :=
-(ELam (ELam (ELam
+Definition evl_body :=
    (EIf (EOp1 OIsNat (EVar n_exp)) (EApp (EVar n_l) (EVar n_exp))
    (EIf (EOp1 OIsStr (EVar n_exp)) (EApp (EVar n_env) (EVar n_exp))
    (EIf (EOp2 OEq (EStr "quote") (EOp1 OCar (EVar n_exp))) (EApp (EVar n_l) (EOp1 OCar (EOp1 OCdr (EVar n_exp))))
@@ -527,7 +526,9 @@ Definition evl :=
    (EIf (EOp2 OEq (EStr "cdr")   (EOp1 OCar (EVar n_exp))) (EOp1 OCdr (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar n_env)))
    (EIf (EOp2 OEq (EStr "app")   (EOp1 OCar (EVar n_exp))) (EApp (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar n_env)) (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EOp1 OCdr (EVar n_exp))))) (EVar n_env)))
    (EStr "error")
-)))))))))))))))))))).
+))))))))))))))))).
+
+Definition evl := (ELam (ELam (ELam evl_body))).
 
 Eval vm_compute in (ev0 (EApp (EApp (EApp evl (ELam (EVar 1))) (ENat 5)) (ELam (EError "unbound")))).
 Eval vm_compute in (ev0 (EApp (EApp (EApp evl (ELam (EVar 1))) (EOp2 OCons (EStr "cons") (EOp2 OCons (ENat 5) (EOp2 OCons (ENat 6) (EStr "."))))) (ELam (EError "unbound")))).
@@ -639,7 +640,7 @@ Proof.
   destruct r2 as [s2 v2].
   destruct v2; try solve [right; repeat eexists; subst; reflexivity].
   left. repeat eexists. subst. reflexivity.
-Qed.  
+Qed.
 
 Lemma inv_if_true:  forall s fuel env e0 e1 e2 r s0,
     ev s (S fuel) env (EIf e0 e1 e2) = r ->
@@ -649,6 +650,120 @@ Proof.
   intros. simpl in H. rewrite H0 in H. apply H.
 Qed.
 
+Fixpoint src_to_val p_src :=
+  match p_src with
+  | ENat n => VNat n
+  | EStr t => VStr t
+  | EOp2 OCons a d => VPair (src_to_val a) (src_to_val d)
+  | EError msg => VError msg
+  | _ => VError "not source"
+  end.
+
+Lemma ev_to_src: forall n, forall fuel, fuel < n -> forall p s env names env' r,
+    ev s fuel env (to_src names env' p) = r ->
+    (exists msg, r = (s, VError msg)) \/
+    r = (s, src_to_val (to_src names env' p)).
+Proof.
+  intros nMax. induction nMax; intros fuel Hfuel.
+  inversion Hfuel.
+  intros.
+  destruct fuel as [| fuel].
+  simpl. left. simpl in H; subst. repeat eexists.
+  destruct p.
+  - simpl. subst.
+    case_eq (index n0 env').
+    intros t E. simpl.
+    rewrite E. simpl. right. reflexivity.
+    intros E. simpl.
+    rewrite E. left. eexists. reflexivity.
+  - simpl. subst.
+    cbv [to_src]. fold to_src.
+    destruct fuel as [| fuel].
+    simpl. left. eexists. reflexivity.
+    remember (S fuel) as Sfuel.
+    remember (ev s fuel env (to_src names env' p1)) as r1.
+    edestruct IHnMax with (fuel:=fuel) (p:=p1) as [[? Herr1] | Hr1]. omega. symmetry. eapply Heqr1.
+    destruct fuel as [| fuel]. subst.
+    left. simpl. eexists. reflexivity.
+    remember (ev s fuel env (to_src names env' p2)) as r2.
+    edestruct IHnMax with (fuel:=fuel) (p:=p2) as [[? Herr2] | Hr2]. omega. symmetry. eapply Heqr2.
+    left. simpl. subst. remember (S fuel) as Sfuel. simpl. rewrite Herr1. subst. simpl. rewrite Herr2.
+    destruct fuel as [| fuel].
+    simpl. eexists. reflexivity.
+    simpl. eexists. reflexivity.
+    left. simpl. subst. remember (S fuel) as Sfuel. simpl. rewrite Herr1. subst. simpl. rewrite Hr2.
+    destruct fuel as [| fuel].
+    simpl. remember (src_to_val (to_src names env' p2)) as v2. destruct v2; eexists; reflexivity.
+    simpl. remember (src_to_val (to_src names env' p2)) as v2. destruct v2; eexists; reflexivity.
+    simpl. subst. simpl.
+    destruct fuel as [| fuel].
+    simpl. left. eexists. reflexivity.
+    remember (S fuel) as Sfuel.
+    remember (ev s fuel env (to_src names env' p2)) as r2.
+    edestruct IHnMax with (fuel:=fuel) (p:=p2) as [[? Herr2] | Hr2]. omega. symmetry. eapply Heqr2.
+    left. rewrite Hr1. subst. simpl. rewrite Herr2.
+    destruct fuel as [| fuel].
+    simpl. remember (src_to_val (to_src names env' p1)) as v1.
+    destruct v1; simpl; eexists; reflexivity.
+    simpl. remember (src_to_val (to_src names env' p1)) as v1.
+    destruct v1; simpl; eexists; reflexivity.
+    rewrite Hr1. subst. simpl. rewrite Hr2.
+    destruct fuel as [| fuel].
+    simpl.
+    remember (src_to_val (to_src names env' p1)) as v1.
+    remember (src_to_val (to_src names env' p2)) as v2.
+    left. destruct v1; destruct v2; simpl; eexists; reflexivity.
+    simpl. subst.
+    remember (src_to_val (to_src names env' p2)) as v2.
+    remember (src_to_val (to_src names env' p1)) as v1.
+    destruct v2; destruct v1; try solve [right; simpl; reflexivity];
+      try solve [left; simpl; eexists; reflexivity].
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+Admitted.
+
+ (*
+Lemma correctness_of_interpretation_loop: forall n, forall fuel, fuel < n ->
+   forall p s names r,
+     ev s fuel [VClo [VClo [] (EVar 1);VNat 0] (ELam (ELam evl_body));VClo [] (EVar 1);VNat 0] (EApp (EVar n_ev) (to_src names [] p)) = r ->
+     (exists s' msg, r = (s', VError msg)) \/ r = ev s fuel [] p.
+Proof.
+  intros nMax. induction nMax; intros fuel Hfuel.
+  inversion Hfuel.
+  intros.
+  destruct fuel.
+  simpl. left. simpl in H; subst. repeat eexists.
+  destruct p.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - cbv [to_src] in H. fold to_src in H. cbv [ev] in H. fold ev in H.
+    destruct fuel as [|fuel].
+    admit.
+    remember (ev s (S fuel) [VClo [VClo [] (EVar 1); VNat 0] (ELam (ELam evl_body)); VClo [] (EVar 1); VNat 0] (EVar n_ev)) as A.
+    simpl in HeqA. rewrite HeqA in H.
+    remember (ev s (S fuel) [VClo [VClo [] (EVar 1); VNat 0] (ELam (ELam evl_body)); VClo [] (EVar 1); VNat 0] (ECons (op1_to_src op) (ECons (to_src names [] p) (EStr ".")))) as B.
+    simpl in HeqB.
+    destruct fuel as [|fuel].
+    admit.
+    simpl in HeqB.
+    destruct fuel as [|fuel].
+    admit.
+    simpl in HeqB. fold ev in HeqB.
 Lemma correctness_of_interpretation_rec: forall n, forall fuel, fuel < n ->
    forall p s names r,
      ev s fuel [] (EApp (EApp (EApp evl (ELam (EVar 1))) (to_src names [] p)) (ELam (EVar 1))) = r ->
@@ -658,7 +773,7 @@ Proof.
   inversion Hfuel.
   intros.
   destruct fuel.
-  simpl. left. simpl in H; subst. repeat eexists. 
+  simpl. left. simpl in H; subst. repeat eexists.
   destruct p.
   - admit. (*
     simpl. simpl in H.
@@ -713,7 +828,41 @@ Proof.
     simpl in Hcl. inversion Hcl.
   - simpl. admit.
   - simpl. admit.
-  - simpl. admit.
+  - cbv [to_src] in H. fold to_src in H. eapply inv_app in H.
+    destruct H as [Herr | [Hev | Hec]].
+    left. apply Herr.
+    destruct Hev as [? [? [? [? [? [Hev1 [Hev2 Hev3]]]]]]].
+    destruct fuel as [| fuel].
+    simpl in Hev1. inversion Hev1.
+    eapply inv_app in Hev1.
+    destruct Hev1 as [Herr | [Hev1 | Hec1]].
+    destruct Herr as [? [? Herr]]. inversion Herr.
+    destruct Hev1 as [? [? [? [? [? [Hev1 [Hev12 Hev13]]]]]]].
+    simpl in Hev12.
+    destruct fuel as [| fuel].
+    simpl in Hev1. inversion Hev1.
+    eapply inv_app_lam in Hev1. simpl in Hev1. destruct Hev1 as [Herr | Hev1].
+    destruct Herr as [? [? Herr]]. inversion Herr.
+    destruct Hev1 as [v2 [s2 [v1 [Hevv2 Hev1]]]].
+    simpl in Hev12.
+    remember (ev x4 fuel [] (op1_to_src op)) as rop.
+    destruct fuel as [| fuel].
+    simpl in Hev1. inversion Hev1. subst.
+    simpl in Hev1. inversion Hev1. subst.
+    simpl in Hev13. inversion Hev13. subst.
+    clear Hev1. clear Hev13.
+    simpl in Hevv2. inversion Hevv2. subst. clear Hevv2.
+    simpl in Hev12.
+    remember (ev x4 fuel [] (to_src names [] p)) as rp.
+    edestruct IHnMax with (fuel:=fuel) (p:=p). omega.
+    simpl in Hev2. inversion Hev2. subst.
+    simpl in Heqrop. rewrite Heqrop in Hev12.
+    remember (ev x4 (S fuel) [] (ECons (to_src names [] p) (EStr "."))) as rcp.
+    simpl in Heqrcp.
+    destruct fuel as [| fuel].
+
+
   - simpl. admit.
   - admit. (*simpl. right. reflexivity.*)
 Admitted.
+*)
