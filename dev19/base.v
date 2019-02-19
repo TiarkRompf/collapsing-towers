@@ -840,8 +840,87 @@ Proof.
   destruct 0; simpl; split; congruence.
 Qed.
 
-(*
-Lemma correctness_of_interpretation_loop: forall n, forall fuel, fuel < n ->
+Eval vm_compute in ev (0,[]) 100 [(src_to_val (to_src0 (EOp2 OPlus (ENat 1) (ENat 1))));VClo [VClo [] (EVar 1);VNat 0] (ELam evl_body);VClo [] (EVar 1);VNat 0] (EApp (EApp (EVar n_ev) (EVar (n_ev+1))) (ELam (EVar 1))).
+
+Lemma ev_var: forall s fuel env n v,
+    index n env = Some v ->
+    ev s (S fuel) env (EVar n) = (s, v).
+Proof.
+  intros. simpl. rewrite H. reflexivity.
+Qed.
+
+Lemma ev_str: forall s fuel env t,
+    ev s (S fuel) env (EStr t) = (s, VStr t).
+Proof.
+  intros. simpl. reflexivity.
+Qed.
+
+Definition Vev := VClo [VClo [] (EVar 1);VNat 0] (ELam evl_body).
+Definition Vid := VClo [] (EVar 1).
+
+Lemma correctness_of_interpretation_inner: forall n, forall fuel, fuel < n ->
+   forall p s names r,
+     ev s fuel [(src_to_val (to_src names [] p));Vev;Vid;Vid] (EApp (EApp (EVar n_ev) (EVar (n_ev+1))) (ELam (EVar 1))) = r ->
+     (exists s' msg, r = (s', VError msg)) \/ r = ev s fuel [] p.
+Proof.
+  intros nMax. induction nMax; intros fuel Hfuel.
+  inversion Hfuel. unfold n_ev in *. simpl in *.
+  intros.
+  destruct fuel.
+  simpl in H. left. subst. repeat eexists.
+  simpl in H.
+  destruct fuel.
+  simpl in H. left. subst. repeat eexists.
+  simpl in H.
+  destruct p.
+  - simpl in H.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    simpl in H. left. subst. repeat eexists.
+  - simpl in H.
+    admit.
+  - simpl in H.
+    admit.
+  - simpl in H.
+    admit.
+  - simpl in H.
+    admit.
+  - simpl in H.
+    admit.
+  - simpl in H.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    simpl in H.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    simpl in H. right. simpl. subst. reflexivity.
+  - admit.
+  - admit.
+  - admit.
+  - destruct fuel as [|fuel].
+    simpl in H. left. subst. repeat eexists.
+    rewrite ev_var with (n:=2) (v:=Vev) in H.
+    unfold Vev in H. fold Vev in H.
+    rewrite ev_var with (n:=3) (v:=src_to_val (to_src names [] (EOp1 op p))) in H.
+    cbv [to_src] in H. fold to_src in H. cbv [src_to_val] in H.
+    simpl in H.
+    destruct fuel as [|fuel].
+    simpl in H. left. subst. repeat eexists.
+    simpl in H.
+    destruct fuel as [|fuel].
+    simpl in H. left. subst. repeat eexists.
+    simpl in H.
+    destruct fuel as [|fuel].
+    simpl in H. left. subst. repeat eexists.
+    rewrite ev_str in H.
+    simpl in H.
+
+    (*here*)
+     left. subst. repeat eexists.
+    simpl.
+    
+    
+ Lemma correctness_of_interpretation_loop: forall n, forall fuel, fuel < n ->
    forall p s names r,
      ev s fuel [VClo [VClo [] (EVar 1);VNat 0] (ELam (ELam evl_body));VClo [] (EVar 1);VNat 0] (EApp (EVar n_ev) (to_src names [] p)) = r ->
      (exists s' msg, r = (s', VError msg)) \/ r = ev s fuel [] p.
@@ -873,17 +952,22 @@ Proof.
     destruct H0 as [? Herr1].
     rewrite <- Herr1 in H. left. repeat eexists. subst. reflexivity.
     rewrite <- H0 in H.
-    destruct error_or_not with (p:=src_to_val (to_src names [] p)).
-    destruct H1 as [? Herr1].
-    rewrite Herr1 in H. left. repeat eexists. subst. reflexivity.
     remember (src_to_val (to_src names [] p)) as v1.
     destruct fuel as [| fuel].
     simpl in H. destruct v1;
                   try solve [left; repeat eexists; subst; reflexivity].
     simpl in H.
-    destruct src_to_val_not with (p_src:=to_src names [] p).
+    remember (S (S (S fuel))) as fuel3. simpl.
+    edestruct IHnMax with (p:=p) (fuel:=fuel3). omega. auto.
+    destruct H1 as [? [? Herr]].
+    simpl in H.
+    rewrite Herr in H0.
+    simpl in H.
     destruct v1;
       try solve [left; repeat eexists; subst; reflexivity].
+    destruct op.
+
+    
     
     edestruct ev_to_src with (p:=p2) (fuel:=fuel) (n:=S fuel). omega. auto.
     remember (ev s (S fuel) [VClo [VClo [] (EVar 1); VNat 0] (ELam (ELam evl_body)); VClo [] (EVar 1); VNat 0] (EVar n_ev)) as A.
@@ -997,4 +1081,3 @@ Proof.
   - simpl. admit.
   - admit. (*simpl. right. reflexivity.*)
 Admitted.
-*)
