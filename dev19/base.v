@@ -931,6 +931,7 @@ Proof.
     simpl in H.
     destruct fuel as [|fuel].
     simpl in H. left. subst. repeat eexists.
+    Arguments string_dec: simpl never.
     unfold n_exp in H.
     match goal with
       | [ H : (let (s, v) := let (s2, v2) := ev ?s1 (S ?fuel1) ?env1 ?e1 in ?body1 in ?body2) = r |- _ ] =>
@@ -946,15 +947,23 @@ Proof.
           rewrite Heqp0 in H;
           clear Heqp0; clear p0
     end.
-    left. subst. repeat eexists.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
     match goal with
-      | [ H : (let (s, v) := ev ?s1 (S ?fuel1) ?env1 ?e1 in ?body1) = r |- _ ] =>
+      | [ H : (let (s, v) := let (s2, v2) := ev ?s1 (S ?fuel1) ?env1 ?e1 in ?body1 in ?body2) = r |- _ ] =>
         remember (ev s1 (S fuel1) env1 e1) as p0;
           simpl in Heqp0;
           rewrite Heqp0 in H;
           clear Heqp0; clear p0
     end.
-    destruct fuel as [|fuel].
+    match goal with
+      | [ H : (let (s, v) := let (s2, v2) := ev ?s1 (S ?fuel1) ?env1 ?e1 in ?body1 in ?body2) = r |- _ ] =>
+        remember (ev s1 (S fuel1) env1 e1) as p0;
+          simpl in Heqp0;
+          rewrite Heqp0 in H;
+          clear Heqp0; clear p0
+    end.
+    destruct fuel.
     simpl in H. left. subst. repeat eexists.
     match goal with
       | [ H : (let (s, v) := let (s2, v2) := let (s3,v3) := ev ?s1 (S ?fuel1) ?env1 ?e1 in ?body1 in ?body2 in ?body3) = r |- _ ] =>
@@ -964,12 +973,94 @@ Proof.
           clear Heqp0; clear p0
     end.
     destruct op.
+    remember (if string_dec "quote" "car" then 1 else 0) as bquote.
+    vm_compute in Heqbquote. rewrite Heqbquote in H.
+    remember (S (S fuel)) as fuel2.
+    simpl in H.
+    rewrite Heqfuel2 in H. remember (S fuel) as fuel1.
+    simpl in H. rewrite Heqfuel1 in H.
+    match goal with
+      | [ H : (let (s, v) := let (s2, v2) := ev ?s1 (S ?fuel1) ?env1 ?e1 in ?body1 in ?body2) = r |- _ ] =>
+        remember (ev s1 (S fuel1) env1 e1) as p0;
+          simpl in Heqp0;
+          rewrite Heqp0 in H;
+          clear Heqp0; clear p0
+    end.
+    match goal with
+      | [ H : (let (s, v) := let (s2, v2) := ev ?s1 (S ?fuel1) ?env1 ?e1 in ?body1 in ?body2) = r |- _ ] =>
+        remember (ev s1 (S fuel1) env1 e1) as p0;
+          simpl in Heqp0;
+          rewrite Heqp0 in H;
+          clear Heqp0; clear p0
+    end.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    match goal with
+      | [ H : (let (s, v) := let (s2, v2) := let (s3,v3) := ev ?s1 (S ?fuel1) ?env1 ?e1 in ?body1 in ?body2 in ?body3) = r |- _ ] =>
+        remember (ev s1 (S fuel1) env1 e1) as p0;
+          simpl in Heqp0;
+          rewrite Heqp0 in H;
+          clear Heqp0; clear p0
+    end.
+    remember (if string_dec "plus" "car" then 1 else 0) as bplus.
+    vm_compute in Heqbplus. rewrite Heqbplus in H.
+    match goal with
+      | [ H : (let (s, v) := ev ?s1 (S ?fuel1) ?env1 ?e1 in ?body1) = r |- _ ] =>
+        remember (ev s1 (S fuel1) env1 e1) as p0;
+          simpl in Heqp0;
+          rewrite Heqp0 in H;
+          clear Heqp0; clear p0
+    end.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    match goal with
+      | [ H : (let (s, v) := let (s2, v2) := let (s3,v3) := ev ?s1 (S ?fuel1) ?env1 ?e1 in ?body1 in ?body2 in ?body3) = r |- _ ] =>
+        remember (ev s1 (S fuel1) env1 e1) as p0;
+          simpl in Heqp0;
+          rewrite Heqp0 in H;
+          clear Heqp0; clear p0
+    end.
+    remember (if string_dec "minus" "car" then 1 else 0) as b0.
+    vm_compute in Heqb0. rewrite Heqb0 in H.
+    remember (S (S fuel)) as fuel2'.
+    simpl in H. rewrite Heqfuel2' in H. remember (S fuel) as fuel1'.
+    match goal with
+      | [ H : (let (s, v) := ev ?s1 (S ?fuel1) ?env1 ?e1 in ?body1) = r |- _ ] =>
+        remember (ev s1 (S fuel1) env1 e1) as p0;
+          simpl in Heqp0;
+          rewrite Heqp0 in H;
+          clear Heqp0; clear p0
+    end.
+    rewrite Heqfuel1' in H.
+    match goal with
+      | [ H : (let (s, v) := let (s2, v2) := ev ?s1 (S ?fuel1) ?env1 ?e1 in ?body1 in ?body2) = r |- _ ] =>
+        remember (ev s1 (S fuel1) env1 e1) as p0;
+          simpl in Heqp0;
+          rewrite Heqp0 in H;
+          clear Heqp0; clear p0
+    end.
+    match goal with
+      | [ H : (let (s, v) := let (s2, v2) := ev ?s1 (S ?fuel1) ?env1 ?e1 in ?body1 in ?body2) = r |- _ ] =>
+        remember (ev s1 (S fuel1) env1 e1) as p0;
+          simpl in Heqp0;
+          rewrite Heqp0 in H;
+          clear Heqp0; clear p0
+    end.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    match goal with
+      | [ H : (let (s, v) := let (s2, v2) := let (s3,v3) := ev ?s1 (S ?fuel1) ?env1 ?e1 in ?body1 in ?body2 in ?body3) = r |- _ ] =>
+        remember (ev s1 (S fuel1) env1 e1) as p0;
+          simpl in Heqp0;
+          rewrite Heqp0 in H;
+          clear Heqp0; clear p0
+    end.
     admit.
     admit.
     admit.
     admit.
     admit.
-    simpl. reflexivity.
+    admit.
     simpl. reflexivity.
   - admit.
   - simpl. simpl in H.
