@@ -297,6 +297,7 @@ object Base {
     case Lift(a)    => s"(lift ${pretty(a,env)})"
     case Fst(a)     => s"(car ${pretty(a,env)})"
     case Snd(a)     => s"(cdr ${pretty(a,env)})"
+    case Cons(a,b)  => s"(cons ${pretty(a,env)} ${pretty(b,env)})"
     case Equ(a,b)   => s"(eq? ${pretty(a,env)} ${pretty(b,env)})"
     case Plus(a,b)  => s"(+ ${pretty(a,env)} ${pretty(b,env)})"
     case Minus(a,b) => s"(- ${pretty(a,env)} ${pretty(b,env)})"
