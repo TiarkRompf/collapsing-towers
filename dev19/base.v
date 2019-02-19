@@ -15,7 +15,6 @@ Inductive op1 :=
 .
 
 Inductive op2 :=
-| OCons
 | OEq
 | OPlus
 | OMinus
@@ -32,6 +31,7 @@ Inductive exp :=
 | ENat (n: nat)
 | EStr (t: string)
 | EIf (e0 e1 e2: exp)
+| ECons (e1 e2: exp)
 | EOp1 (op: op1) (e1: exp)
 | EOp2 (op: op2) (e1 e2: exp)
 | EError (msg: string)
@@ -105,6 +105,13 @@ Fixpoint anf (s: state) (env: list exp) (e: exp): (state * exp) :=
                (reify (anf (fst s0,nil) env e1))
                (reify (anf (fst s0,nil) env e2)))
     end
+    | ECons e1 e2 =>
+    match anf s env e1 with
+    | (s, v1) =>
+      match anf s env e2 with
+      | (s, v2) => reflect s (ECons v1 v2)
+      end
+    end
   | EOp1 op e1 =>
     match anf s env e1 with
     | (s, v1) => reflect s (EOp1 op v1)
@@ -162,7 +169,7 @@ Fixpoint lift (s: state) (fuel: nat) (v: val): (state * exp) :=
     | VStr t => (s, EStr t)
     | VPair v1 v2 =>
       match (v1, v2) with
-      | (VCode e1, VCode e2) => reflect s (EOp2 OCons e1 e2)
+      | (VCode e1, VCode e2) => reflect s (ECons e1 e2)
       | _ => (s, EError "expected code")
       end
     | VClo env0 e0 =>
@@ -229,7 +236,16 @@ with ev (s: state) (fuel: nat) (env: list val) (e: exp): (state * val) :=
       | (s0, VError msg) => (s0, VError msg)
       | (s0, _) => (s0, VError "expected nat")
       end
-    | EOp1 op e1 =>
+    | ECons e1 e2 =>
+      match ev s fuel env e1 with
+      | (s, VError msg) => (s, VError msg)
+      | (s, v1) =>
+        match ev s fuel env e2 with
+        | (s, VError msg) => (s, VError msg)
+        | (s, v2) => (s, VPair v1 v2)
+        end
+      end
+      | EOp1 op e1 =>
       match ev s fuel env e1 with
       | (s, v1) =>
         match (op, v1) with
@@ -257,7 +273,6 @@ with ev (s: state) (fuel: nat) (env: list val) (e: exp): (state * val) :=
           | (_, VCode v1, VCode v2) => reflectc s (EOp2 op v1 v2)
           | (_, VCode v1, _) => (s, VError "stage error")
           | (_, _, VCode v2) => (s, VError "stage error")
-          | (OCons, v1, v2) => (s, VPair v1 v2)
           | (OPlus, VNat n1, VNat n2) => (s, VNat (n1 + n2))
           | (OMinus, VNat n1, VNat n2) => (s, VNat (n1 - n2))
           | (OTimes, VNat n1, VNat n2) => (s, VNat (n1 * n2))
@@ -322,6 +337,7 @@ Fixpoint to_lifted (e: exp): exp :=
   | EStr t => ELift e
   | EIf e0 e1 e2 => EIf (to_lifted e0) (to_lifted e1) (to_lifted e2)
   | EOp1 op e1 => EOp1 op (to_lifted e1)
+  | ECons e1 e2 => ELift (ECons (to_lifted e1) (to_lifted e2))
   | EOp2 op e1 e2 => EOp2 op (to_lifted e1) (to_lifted e2)
   | EError msg => e
   end.
@@ -442,6 +458,23 @@ Proof.
     destruct H2 as [? [? [Hev2 Ha2]]].
     rewrite Hev2. rewrite Ha2.
     right. simpl. repeat eexists.
+  - cbv [to_lifted]. fold to_lifted.
+    simpl.
+    destruct fuel as [| fuel].
+    { simpl. left. repeat eexists. }
+    simpl.
+    edestruct IHnMax with (fuel:=fuel) (e:=e1); eauto. omega.
+    destruct H2 as [? [msg Herr]]. rewrite Herr.
+    { simpl. left. repeat eexists. }
+    destruct H2 as [? [? [Hev Ha]]].
+    rewrite Hev. rewrite Ha.
+    edestruct IHnMax with (fuel:=fuel) (e:=e2); eauto. omega.
+    destruct H2 as [? [? Herr2]]. rewrite Herr2.
+    { simpl. left. repeat eexists. }
+    destruct H2 as [? [? [Hev2 Ha2]]].
+    rewrite Hev2. rewrite Ha2.
+    unfold reflectc. unfold reflect. destruct x1. simpl.
+    right. repeat eexists.
   - simpl.
     edestruct IHnMax with (fuel:=fuel) (e:=e); eauto. omega.
     destruct H2 as [? [msg Herr]]. rewrite Herr.
@@ -521,7 +554,7 @@ Definition evl_body :=
    (EIf (EOp2 OEq (EStr "lift")  (EOp1 OCar (EVar n_exp))) (ELift  (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar n_env)))
    (EIf (EOp2 OEq (EStr "isNat") (EOp1 OCar (EVar n_exp))) (EOp1 OIsNat (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar n_env)))
    (EIf (EOp2 OEq (EStr "isStr") (EOp1 OCar (EVar n_exp))) (EOp1 OIsStr (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar n_env)))
-   (EIf (EOp2 OEq (EStr "cons")  (EOp1 OCar (EVar n_exp))) (EApp (EVar n_l) (EOp2 OCons  (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar n_env)) (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EOp1 OCdr (EVar n_exp))))) (EVar n_env))))
+   (EIf (EOp2 OEq (EStr "cons")  (EOp1 OCar (EVar n_exp))) (EApp (EVar n_l) (ECons  (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar n_env)) (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EOp1 OCdr (EVar n_exp))))) (EVar n_env))))
    (EIf (EOp2 OEq (EStr "car")   (EOp1 OCar (EVar n_exp))) (EOp1 OCar (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar n_env)))
    (EIf (EOp2 OEq (EStr "cdr")   (EOp1 OCar (EVar n_exp))) (EOp1 OCdr (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar n_env)))
    (EIf (EOp2 OEq (EStr "app")   (EOp1 OCar (EVar n_exp))) (EApp (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar n_env)) (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EOp1 OCdr (EVar n_exp))))) (EVar n_env)))
@@ -531,8 +564,8 @@ Definition evl_body :=
 Definition evl := (ELam (ELam (ELam evl_body))).
 
 Eval vm_compute in (ev0 (EApp (EApp (EApp evl (ELam (EVar 1))) (ENat 5)) (ELam (EError "unbound")))).
-Eval vm_compute in (ev0 (EApp (EApp (EApp evl (ELam (EVar 1))) (EOp2 OCons (EStr "cons") (EOp2 OCons (ENat 5) (EOp2 OCons (ENat 6) (EStr "."))))) (ELam (EError "unbound")))).
-Eval vm_compute in (ev0 (EApp (EApp (EApp evl (ELam (EVar 1))) (EOp2 OCons (EStr "app") (EOp2 OCons (EOp2 OCons (EStr "lam") (EOp2 OCons (EStr "_") (EOp2 OCons (EStr "x") (EOp2 OCons (EOp2 OCons (EStr "plus") (EOp2 OCons (EStr "x") (EOp2 OCons (ENat 1) (EStr ".")))) (EStr "."))))) (EOp2 OCons (ENat 2) (EStr (".")))))) (ELam (EError "unbound")))).
+Eval vm_compute in (ev0 (EApp (EApp (EApp evl (ELam (EVar 1))) (ECons (EStr "cons") (ECons (ENat 5) (ECons (ENat 6) (EStr "."))))) (ELam (EError "unbound")))).
+Eval vm_compute in (ev0 (EApp (EApp (EApp evl (ELam (EVar 1))) (ECons (EStr "app") (ECons (ECons (EStr "lam") (ECons (EStr "_") (ECons (EStr "x") (ECons (ECons (EStr "plus") (ECons (EStr "x") (ECons (ENat 1) (EStr ".")))) (EStr "."))))) (ECons (ENat 2) (EStr (".")))))) (ELam (EError "unbound")))).
 
 Definition op1_to_src (o: op1) := EStr (
   match o with
@@ -545,14 +578,11 @@ Definition op1_to_src (o: op1) := EStr (
 
 Definition op2_to_src (o: op2) := EStr (
   match o with
-  | OCons => "cons"
   | OEq => "eq"
   | OPlus => "plus"
   | OMinus => "minus"
   | OTimes => "times"
   end).
-
-Definition ECons a b := EOp2 OCons a b.
 
 Fixpoint to_src (names: list string) (env: list string) (p: exp): exp :=
   match p with
@@ -579,6 +609,7 @@ Fixpoint to_src (names: list string) (env: list string) (p: exp): exp :=
     end
   | EApp e1 e2 => ECons (EStr "app") (ECons (to_src names env e1) (ECons (to_src names env e2) (EStr ".")))
   | EIf e0 e1 e2 => ECons (EStr "if") (ECons (to_src names env e0) (ECons (to_src names env e1) (ECons (to_src names env e2) (EStr "."))))
+  | ECons e1 e2 => ECons (EStr "cons") (ECons (to_src names env e1) (ECons (to_src names env e2) (EStr ".")))
   | EOp1 o e1 => ECons (op1_to_src o) (ECons (to_src names env e1) (EStr "."))
   | EOp2 o e1 e2 => ECons (op2_to_src o) (ECons (to_src names env e1) (ECons (to_src names env e2) (EStr ".")))
   | ELift e1 => ECons (EStr "lift") (ECons (to_src names env e1) (EStr "."))
@@ -650,15 +681,35 @@ Proof.
   intros. simpl in H. rewrite H0 in H. apply H.
 Qed.
 
+Lemma inv_cons: forall s fuel env e1 e2 r,
+  ev s (S fuel) env (ECons e1 e2) = r ->
+  (exists s' msg, r = (s', VError msg)) \/
+  (exists s1 v1 s2 v2,
+      ev s  fuel env e1 = (s1,v1) /\
+      ev s1 fuel env e2 = (s2,v2) /\
+      r = (s2, VPair v1 v2)).
+Proof.
+  intros. simpl in H.
+  remember (ev s fuel env e1) as r1.
+  destruct r1 as [s1 v1].
+  remember (ev s1 fuel env e2) as r2.
+  destruct r2 as [s2 v2].
+  destruct v1;
+    destruct v2;
+    try solve [subst; right; repeat eexists; auto];
+    try solve [subst; left; repeat eexists; auto].
+Qed.
+
 Fixpoint src_to_val p_src :=
   match p_src with
   | ENat n => VNat n
   | EStr t => VStr t
-  | EOp2 OCons a d => VPair (src_to_val a) (src_to_val d)
+  | ECons a d => VPair (src_to_val a) (src_to_val d)
   | EError msg => VError msg
   | _ => VError "not source"
   end.
 
+(*
 Lemma ev_to_src: forall n, forall fuel, fuel < n -> forall p s env names env' r,
     ev s fuel env (to_src names env' p) = r ->
     (exists msg, r = (s, VError msg)) \/
@@ -865,4 +916,5 @@ Proof.
   - simpl. admit.
   - admit. (*simpl. right. reflexivity.*)
 Admitted.
+*)
 *)
