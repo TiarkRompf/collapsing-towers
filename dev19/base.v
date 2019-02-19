@@ -709,66 +709,110 @@ Fixpoint src_to_val p_src :=
   | _ => VError "not source"
   end.
 
-(*
+Lemma econs_ind: forall fuel env p1 p2 s v1 v2 r,
+    ev s fuel env p1 = (s, v1) ->
+    ev s fuel env p2 = (s, v2) ->
+    ev s (S fuel) env (ECons p1 p2) = r ->
+    (exists msg, (s, VError msg) = r) \/ ((s, VPair v1 v2) = r).
+Proof.
+  intros. subst. simpl. rewrite H. rewrite H0.
+  destruct v1; destruct v2; try solve [right; reflexivity]; try solve [left; eexists; reflexivity].
+Qed.
+
+Lemma econs_ind2: forall fuel env p1 p2 s v1 v2 r,
+    ev s fuel env p1 = (s, v1) ->
+    ev s fuel env p2 = (s, v2) ->
+    ev s (S fuel) env (ECons p1 p2) = r ->
+    ((exists msg, (VError msg = v1)) /\ (s, v1) = r) \/
+    ((forall msg1, (VError msg1 <> v1)) /\ (exists msg, VError msg = v2) /\ (s, v2) = r) \/
+    ((forall msg1, (VError msg1 <> v1)) /\ (forall msg2, VError msg2 <> v2) /\ (s, VPair v1 v2) = r).
+Proof.
+  intros. subst. simpl. rewrite H. rewrite H0.
+  destruct v1; destruct v2;
+    try solve [right; right; split; try split; try congruence; try reflexivity];
+    try solve [right; left; split; try split; try eexists; try congruence; try reflexivity];
+    try solve [left; split; try eexists; try congruence; try reflexivity].
+Qed.
+
+Lemma econs_ind1err: forall fuel env p1 p2 s msg1,
+    ev s fuel env p1 = (s, VError msg1) ->
+    ev s (S fuel) env (ECons p1 p2) = (s, VError msg1).
+Proof.
+  intros. subst. simpl. rewrite H. reflexivity.
+Qed.
+
+Lemma econs_ind2err: forall fuel env p1 p2 s v1 msg2,
+    ev s fuel env p1 = (s, v1) ->
+    (forall msg1, v1 <> VError msg1) ->
+    ev s fuel env p2 = (s, VError msg2) ->
+    ev s (S fuel) env (ECons p1 p2) = (s, VError msg2).
+Proof.
+  intros. subst. simpl. rewrite H. rewrite H1.
+  destruct v1; try solve [reflexivity].
+  congruence.
+Qed.
+
+Lemma econs_indv: forall fuel env p1 p2 s v1 v2 r,
+    ev s fuel env p1 = (s, v1) ->
+    (forall msg1, v1 <> VError msg1) ->
+    ev s fuel env p2 = (s, v2) ->
+    (forall msg2, v2 <> VError msg2) ->
+    ev s (S fuel) env (ECons p1 p2) = r ->
+    (s, VPair v1 v2) = r.
+Proof.
+  intros. subst. simpl. rewrite H. rewrite H1.
+  destruct v1; destruct v2; try reflexivity; try congruence.
+Qed.
+
 Lemma ev_to_src: forall n, forall fuel, fuel < n -> forall p s env names env' r,
     ev s fuel env (to_src names env' p) = r ->
-    (exists msg, r = (s, VError msg)) \/
-    r = (s, src_to_val (to_src names env' p)).
+    (exists msg, (s, VError msg) = r) \/ ((s, src_to_val (to_src names env' p)) = r).
 Proof.
   intros nMax. induction nMax; intros fuel Hfuel.
   inversion Hfuel.
-  intros.
   destruct fuel as [| fuel].
-  simpl. left. simpl in H; subst. repeat eexists.
+  simpl. intros. left. subst. repeat eexists.
+  intros.
   destruct p.
-  - simpl. subst.
+  - simpl. subst. simpl.
     case_eq (index n0 env').
-    intros t E. simpl.
-    rewrite E. simpl. right. reflexivity.
-    intros E. simpl.
-    rewrite E. left. eexists. reflexivity.
-  - simpl. subst.
-    cbv [to_src]. fold to_src.
+    intros t E. simpl. right. reflexivity.
+    intros E. simpl. left. repeat eexists.
+  - simpl.
+    cbv [to_src] in H. fold to_src in H.
+    simpl in H.
     destruct fuel as [| fuel].
-    simpl. left. eexists. reflexivity.
-    remember (S fuel) as Sfuel.
-    remember (ev s fuel env (to_src names env' p1)) as r1.
-    edestruct IHnMax with (fuel:=fuel) (p:=p1) as [[? Herr1] | Hr1]. omega. symmetry. eapply Heqr1.
-    destruct fuel as [| fuel]. subst.
-    left. simpl. eexists. reflexivity.
-    remember (ev s fuel env (to_src names env' p2)) as r2.
-    edestruct IHnMax with (fuel:=fuel) (p:=p2) as [[? Herr2] | Hr2]. omega. symmetry. eapply Heqr2.
-    left. simpl. subst. remember (S fuel) as Sfuel. simpl. rewrite Herr1. subst. simpl. rewrite Herr2.
+    simpl in H. left. repeat eexists. eapply H.
+    edestruct IHnMax with (fuel:=fuel) (p:=p1) (s:=s) (env:=env) (names:=names) (env':=env'). omega. auto.
+    destruct H0 as [? Herr1]. symmetry in Herr1.
+    eapply econs_ind1err in Herr1.
+    remember (ev s (S fuel) env (EStr "app")) as rapp.
+    simpl in Heqrapp. rewrite Heqrapp in H.
+    rewrite Herr1 in H.
+    left. eexists. eapply H.
+    simpl in H.
     destruct fuel as [| fuel].
-    simpl. eexists. reflexivity.
-    simpl. eexists. reflexivity.
-    left. simpl. subst. remember (S fuel) as Sfuel. simpl. rewrite Herr1. subst. simpl. rewrite Hr2.
-    destruct fuel as [| fuel].
-    simpl. remember (src_to_val (to_src names env' p2)) as v2. destruct v2; eexists; reflexivity.
-    simpl. remember (src_to_val (to_src names env' p2)) as v2. destruct v2; eexists; reflexivity.
-    simpl. subst. simpl.
-    destruct fuel as [| fuel].
-    simpl. left. eexists. reflexivity.
-    remember (S fuel) as Sfuel.
-    remember (ev s fuel env (to_src names env' p2)) as r2.
-    edestruct IHnMax with (fuel:=fuel) (p:=p2) as [[? Herr2] | Hr2]. omega. symmetry. eapply Heqr2.
-    left. rewrite Hr1. subst. simpl. rewrite Herr2.
-    destruct fuel as [| fuel].
-    simpl. remember (src_to_val (to_src names env' p1)) as v1.
-    destruct v1; simpl; eexists; reflexivity.
-    simpl. remember (src_to_val (to_src names env' p1)) as v1.
-    destruct v1; simpl; eexists; reflexivity.
-    rewrite Hr1. subst. simpl. rewrite Hr2.
-    destruct fuel as [| fuel].
-    simpl.
+    simpl in H. left. eexists. eapply H.
+    edestruct IHnMax with (fuel:=fuel) (p:=p2) (s:=s) (env:=env) (names:=names) (env':=env'). omega. auto.
+    destruct H1 as [? Herr2]. symmetry in Herr2.
+    eapply econs_ind1err in Herr2.
+    rewrite <- H0 in H.
+    rewrite Herr2 in H.
+    remember (src_to_val (to_src names env' p1)) as v1.
+    destruct v1; try solve [left; eexists; eapply H].
+    rewrite <- H0 in H. simpl in H.
+    rewrite <- H1 in H. simpl in H.
     remember (src_to_val (to_src names env' p1)) as v1.
     remember (src_to_val (to_src names env' p2)) as v2.
-    left. destruct v1; destruct v2; simpl; eexists; reflexivity.
-    simpl. subst.
-    remember (src_to_val (to_src names env' p2)) as v2.
-    remember (src_to_val (to_src names env' p1)) as v1.
-    destruct v2; destruct v1; try solve [right; simpl; reflexivity];
-      try solve [left; simpl; eexists; reflexivity].
+    destruct fuel as [| fuel].
+    simpl in H.
+    destruct v1; try solve [left; eexists; eapply H];
+      destruct v2; try solve [left; eexists; eapply H].
+    simpl in H.
+    destruct v1; try solve [left; eexists; eapply H];
+      destruct v2; try solve [left; eexists; eapply H];
+        try solve [right; subst; reflexivity].
+  - admit.
   - admit.
   - admit.
   - admit.
@@ -780,6 +824,7 @@ Proof.
   - admit.
   - admit.
 Admitted.
+
 
  (*
 Lemma correctness_of_interpretation_loop: forall n, forall fuel, fuel < n ->
@@ -916,5 +961,4 @@ Proof.
   - simpl. admit.
   - admit. (*simpl. right. reflexivity.*)
 Admitted.
-*)
 *)
