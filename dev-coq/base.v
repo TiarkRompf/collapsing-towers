@@ -1053,9 +1053,27 @@ Proof.
     destruct fuel.
     simpl in H. left. subst. repeat eexists.
     destruct fuel.
-    admit.
+    change 3 with (S 2) in H. remember 2 as fuele.
+    simpl1 H r p0 Heqp0.
+    rewrite Heqfuele in *. clear Heqfuele. clear fuele.
+    change 2 with (S 1) in H. remember 1 as fuele.
+    simpl2 H r p0 Heqp0.
+    rewrite Heqfuele in *. clear Heqfuele. clear fuele.
+    rewrite ev_var with (v:=Vev) in H. unfold Vev in H at 1.
+    change 1 with (S 0) in H.
+    simpl3 H r p0 Heqp0. left. subst. repeat eexists.
+    rewrite Heqenv0. unfold n_ev. simpl. reflexivity.
     destruct fuel.
-    admit.
+    change 4 with (S 3) in H. remember 3 as fuele.
+    simpl1 H r p0 Heqp0.
+    rewrite Heqfuele in *. clear Heqfuele. clear fuele.
+    change 3 with (S 2) in H. remember 2 as fuele.
+    simpl2 H r p0 Heqp0.
+    rewrite Heqfuele in *. clear Heqfuele. clear fuele.
+    rewrite ev_var with (v:=Vev) in H. unfold Vev in H at 1.
+    change 1 with (S 0) in H.
+    simpl3 H r p0 Heqp0. left. subst. repeat eexists.
+    rewrite Heqenv0. unfold n_ev. simpl. reflexivity.
 
     rewrite HI in H.
     remember (ev s (S (S (S (S fuel))))
