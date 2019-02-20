@@ -918,7 +918,94 @@ Proof.
   - admit.
   - admit.
   - admit.
-  - admit.
+  - remember (src_to_val (to_src names [] (ERun p1 p2))) as p_src_val.
+    simpl in Heqp_src_val.
+    remember [Vid; Vid; p_src_val; Vev; Vid; Vid] as env0.
+    simpl1 H r p0 Heqp0.
+    assert (index n_exp env0 = Some p_src_val) as Hip. {
+      unfold n_exp. rewrite Heqenv0. simpl. reflexivity.
+    }
+    rewrite Hip in H. rewrite Heqp_src_val in H at 1.
+    simpl in H.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    rewrite ev_var with (n:=n_exp) (v:=p_src_val) in H.
+    rewrite Heqp_src_val in H at 1.
+    simpl1 H r p0 Heqp0.
+    Arguments string_dec: simpl never.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    rewrite ev_str with (t:="quote") in H.
+    assert (forall fuel, ev s (S (S fuel)) env0 (EOp1 OCar (EVar n_exp)) = (s, VStr "run")) as Hcar. {
+      intros. simpl. rewrite Hip. rewrite Heqp_src_val. reflexivity.
+    }
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    rewrite (Hcar fuel) in H.
+    remember (if string_dec "quote" "run" then 1 else 0) as b.
+    vm_compute in Heqb. rewrite Heqb in H.
+    assert (forall fuel op e1 e2, op <> "run" ->
+      ev s (S (S (S (S fuel)))) env0 (EIf (EOp2 OEq (EStr op) (EOp1 OCar (EVar n_exp))) e1 e2) = ev s (S (S (S fuel))) env0 e2) as Helse. {
+      intros fuel0 op e1 e2  Hnotop.
+      remember (S (S (S fuel0))) as fuel03.
+      simpl.
+      rewrite Heqfuel03.
+      remember (S (S fuel0)) as fuel02.
+      simpl.
+      rewrite Heqfuel02.
+      remember (S fuel0) as fuel01.
+      rewrite ev_str with (t:=op).
+      rewrite Heqfuel01.
+      rewrite (Hcar fuel0).
+      remember (string_dec op "run") as cmp.
+      case_eq cmp.
+      intros. congruence. intros ? Hcmp.
+      auto.
+    }
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    
+    rewrite Helse in H.
+    simpl in H. left. subst. repeat eexists. reflexivity.
   - simpl in H. subst. right. simpl. reflexivity.
   - cbv [to_src] in H. cbv [src_to_val] in H.
     simpl in H.
