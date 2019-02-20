@@ -1005,14 +1005,41 @@ Proof.
 
 
     
-    assert (ev s (S fuel) env0 (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar n_env)) =
-            ev s fuel [Vid; VClo [p1_src_val; Vev; Vid; Vid] (EVar 1); p1_src_val; Vev; Vid; Vid] evl_body) as HI. {
-      simpl.
-      destruct fuel.
-      simpl. reflexivity.
+    assert (ev s (S (S (S (S (S fuel))))) env0 (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar n_env)) =
+            ev s (S (S (S (S fuel)))) [VClo [p1_src_val; VClo [VClo [] (EVar 1); VClo [] (EVar 1)] (ELam evl_body); VClo [] (EVar 1); VClo [] (EVar 1)] evl_body; p1_src_val; Vev; Vid; Vid] evl_body) as HI. {
 
-      destruct fuel.
-      simpl. reflexivity.
+      Ltac simplh1 p0 Heqp0 :=
+        match goal with
+        | [ |- (let (s, v) := ev ?s1 (S ?fuel1) ?env1 ?e1 in ?body1) = ?r ] =>
+          remember (ev s1 (S fuel1) env1 e1) as p0;
+          simpl in Heqp0;
+          rewrite Heqp0;
+          clear Heqp0; clear p0
+        end.
+      Ltac simplh2 p0 Heqp0 :=
+        match goal with
+        | [ |- (let (s, v) := let (s2, v2) := ev ?s1 (S ?fuel1) ?env1 ?e1 in ?body1 in ?body2) = ?r ] =>
+          remember (ev s1 (S fuel1) env1 e1) as p0;
+          simpl in Heqp0;
+          rewrite Heqp0;
+          clear Heqp0; clear p0
+        end.
+      Ltac simplh3 p0 Heqp0 :=
+        match goal with
+        | [ |- (let (s, v) := let (s2, v2) := let (s3,v3) := ev ?s1 (S ?fuel1) ?env1 ?e1 in ?body1 in ?body2 in ?body3) = ?r ] =>
+          remember (ev s1 (S fuel1) env1 e1) as p0;
+          simpl in Heqp0;
+          rewrite Heqp0;
+          clear Heqp0; clear p0
+        end.
+
+      remember (S (S (S (S fuel)))) as fuel'.
+      simpl.
+      rewrite Heqfuel' in *. clear Heqfuel'. clear fuel'.
+
+      remember (S (S (S fuel))) as fuel'.
+      simplh1 p0 Heqp0.
+      rewrite Heqfuel' in *. clear Heqfuel'. clear fuel'.
 
       rewrite ev_var with (v:=Vev). unfold Vev.
 
@@ -1028,21 +1055,13 @@ Proof.
         destruct p1_src_val; congruence.
       }
       rewrite B.
-      remember (S (S fuel)) as fuel02.
-      match goal with
-      | [ |- (let (s, v) := ev ?s1 (S ?fuel1) ?env1 ?e1 in ?body1) = _ ] =>
-        remember (ev s1 (S fuel1) env1 e1) as p0;
-          simpl in Heqp0;
-          rewrite Heqp0;
-          clear Heqp0; clear p0
-      end.
-      remember (index n_env env0) as ienv.
-      unfold n_env in Heqienv. rewrite Heqenv0 in Heqienv. simpl in Heqienv.
-      rewrite Heqienv. unfold Vid at 1.
-      unfold evl_body at 1.
-      simpl. fold evl_body.
-      reflexivity.
 
+      remember (S (S fuel)) as fuel'.
+      simplh1 p0 Heqp0.
+      rewrite Heqfuel' in *. clear Heqfuel'. clear fuel'.
+
+      rewrite ev_var with (v:=Vid). unfold Vid.
+      reflexivity.
     }
     simpl1 H r p0 Heqp0.
     rewrite Heqfuel1' in H.
