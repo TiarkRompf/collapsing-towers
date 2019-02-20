@@ -558,7 +558,7 @@ Definition evl_body :=
    (EIf (EOp2 OEq (EStr "car")   (EOp1 OCar (EVar n_exp))) (EOp1 OCar (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar n_env)))
    (EIf (EOp2 OEq (EStr "cdr")   (EOp1 OCar (EVar n_exp))) (EOp1 OCdr (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar n_env)))
    (EIf (EOp2 OEq (EStr "app")   (EOp1 OCar (EVar n_exp))) (EApp (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar n_env)) (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EOp1 OCdr (EVar n_exp))))) (EVar n_env)))
-   (EStr "error")
+   (EError "error")
 ))))))))))))))))).
 
 Definition evl := (ELam (ELam (ELam evl_body))).
@@ -1003,9 +1003,10 @@ Proof.
     rewrite Helse in H.
     destruct fuel.
     simpl in H. left. subst. repeat eexists.
-    
     rewrite Helse in H.
-    simpl in H. left. subst. repeat eexists. reflexivity.
+    simpl in H. left. subst. repeat eexists.
+    congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence.
+    congruence. congruence. congruence.
   - simpl in H. subst. right. simpl. reflexivity.
   - cbv [to_src] in H. cbv [src_to_val] in H.
     simpl in H.
