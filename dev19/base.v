@@ -882,7 +882,7 @@ Proof.
   - admit.
   - admit.
   - admit.
-  - admit.
+  - simpl in H. subst. right. simpl. reflexivity.
   - admit.
   - admit.
   - admit.
