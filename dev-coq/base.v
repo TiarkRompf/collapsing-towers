@@ -897,6 +897,50 @@ Proof.
   intros. simpl. reflexivity.
 Qed.
 
+Lemma ev_fuel_mono: forall fuel s env e s' v,
+        ev s fuel env e = (s', v) ->
+        (forall msg, v <> VError msg) ->
+        ev s (S fuel) env e = (s', v).
+Proof.
+  intros fuel. induction fuel; intros s env e s' v Hev Hnoerr.
+  simpl in Hev. congruence.
+  destruct e.
+  - simpl in Hev.
+    case_eq (index n0 env).
+    intros v0 E. simpl. rewrite E in *. inversion Hev. subst. reflexivity.
+    intros E. simpl. rewrite E in *. inversion Hev. congruence.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+Admitted.
+
+Lemma ev_fuel_monotonic: forall fuel fuel' s env e s' v,
+        fuel' > fuel ->
+        ev s fuel env e = (s', v) ->
+        (forall msg, v <> VError msg) ->
+        ev s fuel' env e = (s', v).
+Proof.
+  admit.
+Admitted.
+
+Lemma lift_monotonic: forall fuel fuel' s e s' v,
+        fuel' > fuel ->
+        lift s fuel v = (s', e) ->
+        (forall msg, v <> VError msg) ->
+        lift s fuel' v = (s', e).
+Proof.
+  admit.
+Admitted.
+
 Lemma correctness_of_interpretation_inner: forall n, forall fuel, fuel < n -> forall p s names r Venv_self,
      Venv_self = VClo [(src_to_val (to_src names [] p));Vev;Vid;Vid] evl_body ->
      ev s fuel [Vid;Venv_self;(src_to_val (to_src names [] p));Vev;Vid;Vid] evl_body = r ->
@@ -1086,7 +1130,23 @@ Proof.
     destruct H0 as [? [? Herr]].
     rewrite Herr in H. simpl in H. left. subst. repeat eexists.
     rewrite HeqfuelS. rewrite Heqfuel2. rewrite Heqfuel1. rewrite Heqfuel2'.
-    admit.
+    destruct r1 as [s1 v1].
+    rewrite ev_fuel_monotonic with (v:=v1) (s':=s1) (fuel:=(S (S (S (S fuel))))).
+    destruct (error_or_not v1) as [[? Herr1] | Hnop1].
+    left. subst. repeat eexists.
+    assert (forall b (s: state),
+               match v1 with
+               | VError msg => (s, VError msg)
+               | _ => b
+               end = b) as B. {
+      destruct v1; congruence.
+    }
+    rewrite B. rewrite B in H.
+    remember (lift s1 (S (S (S (S (S fuel))))) v1) as r2.
+    destruct r2 as [s2 e2].
+    rewrite lift_monotonic with (e:=e2) (s':=s2) (fuel:=(S (S (S (S (S fuel)))))).
+    destruct e2; try auto.
+    omega. auto. auto. omega. auto. admit.
     congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence.
   - remember (src_to_val (to_src names [] (ERun p1 p2))) as p_src_val.
     simpl in Heqp_src_val.
