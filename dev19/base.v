@@ -855,9 +855,43 @@ Proof.
   intros. simpl. reflexivity.
 Qed.
 
-Definition Vev := VClo [VClo [] (EVar 1);VNat 0] (ELam evl_body).
 Definition Vid := VClo [] (EVar 1).
+Definition Vev := VClo [Vid;Vid] (ELam evl_body).
 
+Eval vm_compute in ev (0,[]) 100 [Vid;Vid;(src_to_val (to_src0 (EOp2 OPlus (ENat 1) (ENat 1))));Vev;Vid;Vid] evl_body.
+
+Lemma correctness_of_interpretation_inner: forall n, forall fuel, fuel < n ->
+   forall p s names r,
+     ev s fuel [Vid;Vid;(src_to_val (to_src names [] p));Vev;Vid;Vid] evl_body = r ->
+     (exists s' msg, r = (s', VError msg)) \/ r = ev s fuel [] p.
+Proof.
+  intros nMax. induction nMax; intros fuel Hfuel.
+  inversion Hfuel. unfold n_ev in *. simpl in *.
+  intros.
+  destruct fuel.
+  simpl in H. left. subst. repeat eexists.
+  simpl in H.
+  destruct fuel.
+  simpl in H. left. subst. repeat eexists.
+  destruct fuel.
+  simpl in H. left. subst. repeat eexists.
+  destruct p.
+  - simpl in H. left. subst. repeat eexists.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+Admitted.
+
+(*    
 Lemma correctness_of_interpretation_inner: forall n, forall fuel, fuel < n ->
    forall p s names r,
      ev s fuel [(src_to_val (to_src names [] p));Vev;Vid;Vid] (EApp (EApp (EVar n_ev) (EVar (n_ev+1))) (ELam (EVar 1))) = r ->
@@ -1409,4 +1443,5 @@ Proof.
   - simpl. admit.
   - admit. (*simpl. right. reflexivity.*)
 Admitted.
+*)
 *)
