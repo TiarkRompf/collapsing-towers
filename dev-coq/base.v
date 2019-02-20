@@ -1006,7 +1006,7 @@ Proof.
 
     
     assert (ev s (S (S (S (S (S fuel))))) env0 (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar n_env)) =
-            ev s (S (S (S (S fuel)))) [VClo [p1_src_val; VClo [VClo [] (EVar 1); VClo [] (EVar 1)] (ELam evl_body); VClo [] (EVar 1); VClo [] (EVar 1)] evl_body; p1_src_val; Vev; Vid; Vid] evl_body) as HI. {
+            ev s (S (S (S (S fuel)))) [Vid; VClo [p1_src_val; VClo [VClo [] (EVar 1); VClo [] (EVar 1)] (ELam evl_body); VClo [] (EVar 1); VClo [] (EVar 1)] evl_body; p1_src_val; Vev; Vid; Vid] evl_body) as HI. {
 
       Ltac simplh1 p0 Heqp0 :=
         match goal with
@@ -1062,6 +1062,8 @@ Proof.
 
       rewrite ev_var with (v:=Vid). unfold Vid.
       reflexivity.
+      rewrite Heqenv0. unfold n_env. simpl. reflexivity.
+      rewrite Heqenv0. unfold n_env. simpl. reflexivity.
     }
     simpl1 H r p0 Heqp0.
     rewrite Heqfuel1' in H.
