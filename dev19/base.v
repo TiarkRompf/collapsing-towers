@@ -917,7 +917,117 @@ Proof.
   - admit.
   - admit.
   - admit.
-  - admit.
+  - remember (src_to_val (to_src names [] (ELift p))) as p_src_val.
+    simpl in Heqp_src_val.
+    remember [Vid; Vid; p_src_val; Vev; Vid; Vid] as env0.
+    simpl1 H r p0 Heqp0.
+    assert (index n_exp env0 = Some p_src_val) as Hip. {
+      unfold n_exp. rewrite Heqenv0. simpl. reflexivity.
+    }
+    rewrite Hip in H. rewrite Heqp_src_val in H at 1.
+    simpl in H.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    rewrite ev_var with (n:=n_exp) (v:=p_src_val) in H.
+    rewrite Heqp_src_val in H at 1.
+    simpl1 H r p0 Heqp0.
+    Arguments string_dec: simpl never.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    rewrite ev_str with (t:="quote") in H.
+    assert (forall fuel, ev s (S (S fuel)) env0 (EOp1 OCar (EVar n_exp)) = (s, VStr "lift")) as Hcar. {
+      intros. simpl. rewrite Hip. rewrite Heqp_src_val. reflexivity.
+    }
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    rewrite (Hcar fuel) in H.
+    remember (if string_dec "quote" "lift" then 1 else 0) as b.
+    vm_compute in Heqb. rewrite Heqb in H.
+    assert (forall fuel op e1 e2, op <> "lift" ->
+      ev s (S (S (S (S fuel)))) env0 (EIf (EOp2 OEq (EStr op) (EOp1 OCar (EVar n_exp))) e1 e2) = ev s (S (S (S fuel))) env0 e2) as Helse. {
+      intros fuel0 op e1 e2  Hnotop.
+      remember (S (S (S fuel0))) as fuel03.
+      simpl.
+      rewrite Heqfuel03.
+      remember (S (S fuel0)) as fuel02.
+      simpl.
+      rewrite Heqfuel02.
+      remember (S fuel0) as fuel01.
+      rewrite ev_str with (t:=op).
+      rewrite Heqfuel01.
+      rewrite (Hcar fuel0).
+      remember (string_dec op "lift") as cmp.
+      case_eq cmp.
+      intros. congruence. intros ? Hcmp.
+      auto.
+    }
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    rewrite Helse in H.
+    remember (S (S fuel)) as fuel2.
+    simpl in H.
+    rewrite Heqfuel2 in H.
+    remember (S fuel) as fuel1.
+    simpl1 H r p0 Heqp0.
+    rewrite Heqfuel1 in H.
+    rewrite ev_str in H.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    rewrite (Hcar fuel) in H.
+    remember (if string_dec "lift" "lift" then 1 else 0) as yes.
+    vm_compute in Heqyes. rewrite Heqyes in H.
+    simpl in H.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    simpl3 H r p0 Heqp0.
+    remember (index n_ev env0 ) as iev.
+    unfold n_ev in Heqiev. rewrite Heqenv0 in Heqiev. simpl in Heqiev.
+    rewrite Heqiev in H. unfold Vev in H at 1.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    simpl3 H r p0 Heqp0.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    rewrite ev_var with (n:=n_exp) (v:=p_src_val) in H.
+    rewrite Heqp_src_val in H at 1.
+    remember (src_to_val (to_src names [] p)) as p1_src_val.
+    destruct (error_or_not p1_src_val) as [[? Herr1] | Hnop1].
+    rewrite Herr1 in H. left. subst. repeat eexists.
+    assert (forall b,
+               match p1_src_val with
+               | VError msg => (s, VError msg)
+               | _ => b
+               end = b) as A. {
+      destruct p1_src_val; congruence.
+      }
+    rewrite A in H.
+    simpl2 H r p0 Heqp0.
+    remember (index n_env env0) as ienv.
+    unfold n_env in Heqienv. rewrite Heqenv0 in Heqienv. simpl in Heqienv.
+    rewrite Heqienv in H. unfold Vid in H at 1. unfold evl_body in H at 1.
+    simpl2 H r p0 Heqp0.
+    rewrite Heqp1_src_val in H at 1.
+    (* looks weird *)
+    admit.
+    congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence.
   - remember (src_to_val (to_src names [] (ERun p1 p2))) as p_src_val.
     simpl in Heqp_src_val.
     remember [Vid; Vid; p_src_val; Vev; Vid; Vid] as env0.
