@@ -860,6 +860,43 @@ Definition Vev := VClo [Vid;Vid] (ELam evl_body).
 
 Eval vm_compute in ev (0,[]) 100 [Vid;Vid;(src_to_val (to_src0 (EOp2 OPlus (ENat 1) (ENat 1))));Vev;Vid;Vid] evl_body.
 
+Ltac simpl1 H r p0 Heqp0 :=
+  match goal with
+  | [ H : (let (s, v) := ev ?s1 (S ?fuel1) ?env1 ?e1 in ?body1) = r |- _ ] =>
+    remember (ev s1 (S fuel1) env1 e1) as p0;
+    simpl in Heqp0;
+    rewrite Heqp0 in H;
+    clear Heqp0; clear p0
+  end.
+Ltac simpl2 H r p0 Heqp0 :=
+  match goal with
+  | [ H : (let (s, v) := let (s2, v2) := ev ?s1 (S ?fuel1) ?env1 ?e1 in ?body1 in ?body2) = r |- _ ] =>
+    remember (ev s1 (S fuel1) env1 e1) as p0;
+    simpl in Heqp0;
+    rewrite Heqp0 in H;
+    clear Heqp0; clear p0
+  end.
+Ltac simpl3 H r p0 Heqp0 :=
+  match goal with
+  | [ H : (let (s, v) := let (s2, v2) := let (s3,v3) := ev ?s1 (S ?fuel1) ?env1 ?e1 in ?body1 in ?body2 in ?body3) = r |- _ ] =>
+    remember (ev s1 (S fuel1) env1 e1) as p0;
+    simpl in Heqp0;
+    rewrite Heqp0 in H;
+    clear Heqp0; clear p0
+  end.
+
+Lemma exp_apart_car: forall s fuel a d,
+    ev s (S (S fuel)) [Vid; Vid; VPair a d; Vev; Vid; Vid] (EOp1 OCar (EVar n_exp)) = (s, a).
+Proof.
+  intros. simpl. reflexivity.
+Qed.
+
+Lemma exp_apart_cdr: forall s fuel a d,
+    ev s (S (S fuel)) [Vid; Vid; VPair a d; Vev; Vid; Vid] (EOp1 OCdr (EVar n_exp)) = (s, d).
+Proof.
+  intros. simpl. reflexivity.
+Qed.
+
 Lemma correctness_of_interpretation_inner: forall n, forall fuel, fuel < n ->
    forall p s names r,
      ev s fuel [Vid;Vid;(src_to_val (to_src names [] p));Vev;Vid;Vid] evl_body = r ->
@@ -883,7 +920,29 @@ Proof.
   - admit.
   - admit.
   - simpl in H. subst. right. simpl. reflexivity.
-  - admit.
+  - cbv [to_src] in H. cbv [src_to_val] in H.
+    simpl in H.
+    destruct fuel as [|fuel].
+    simpl in H. left. subst. repeat eexists.
+    rewrite ev_var with (n:=n_exp) (v:=VPair (VStr "quote") (VPair (VStr t) (VStr "."))) in H.
+    simpl1 H r p0 Heqp0.
+    simpl in H.
+    destruct fuel as [|fuel].
+    simpl in H. left. subst. repeat eexists.
+    Arguments string_dec: simpl never.
+    rewrite ev_str with (t:="quote") in H.
+    destruct fuel as [|fuel].
+    simpl in H. left. subst. repeat eexists.
+    rewrite exp_apart_car in H.
+    remember (if string_dec "quote" "quote" then 1 else 0) as b.
+    vm_compute in Heqb. rewrite Heqb in H.
+    simpl1 H r p0 Heqp0.
+    unfold Vid in H.
+    simpl. simpl in H.
+    destruct fuel as [|fuel].
+    simpl in H. left. subst. repeat eexists.
+    simpl in H. subst. right. reflexivity.
+    simpl. reflexivity.
   - admit.
   - admit.
   - admit.
