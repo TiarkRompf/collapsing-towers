@@ -836,18 +836,87 @@ Proof.
   intros. simpl. reflexivity.
 Qed.
 
-Lemma ev_fuel_mono: forall fuel s env e s' v,
-        ev s fuel env e = (s', v) ->
+Lemma all_mono: forall fuel0,
+    (forall s fuel env e s' v,
+        ev s fuel env e = (s', v) -> fuel < fuel0 ->
         (forall msg, v <> VError msg) ->
-        ev s (S fuel) env e = (s', v).
+        ev s (S fuel) env e = (s', v)) /\
+    (forall s fuel v s' e,
+        lift s fuel v = (s', e) ->  fuel < fuel0 ->
+        (forall msg, e <> EError msg) ->
+        lift s (S fuel) v = (s', e)).
 Proof.
-  intros fuel. induction fuel; intros s env e s' v Hev Hnoerr.
-  simpl in Hev. congruence.
-  destruct e.
-  - simpl in Hev.
-    case_eq (index n0 env).
-    intros v0 E. simpl. rewrite E in *. inversion Hev. subst. reflexivity.
-    intros E. simpl. rewrite E in *. inversion Hev. congruence.
+  intros n. induction n. repeat split; intros; omega.
+  repeat split; intros; destruct fuel; try solve [simpl in H; congruence];
+    destruct e.
+  - simpl in H.
+    case_eq (index n1 env).
+    intros v1 E. simpl. rewrite E in *. inversion H. subst. reflexivity.
+    intros E. simpl. rewrite E in *. inversion H. congruence.
+  - destruct IHn as [IHn1 IHn2].
+    remember (S fuel) as Sfuel.
+    simpl. rewrite HeqSfuel in *.
+    simpl in H.
+    remember (ev s fuel env e1) as ev1.
+    destruct ev1 as [s1 v1].
+    symmetry in Heqev1.
+    apply IHn1 in Heqev1.
+    rewrite Heqev1.
+    remember (ev s1 fuel env e2) as ev2.
+    destruct ev2 as [s2 v2].
+    symmetry in Heqev2.
+    apply IHn1 in Heqev2.
+    rewrite Heqev2.
+    destruct v1; destruct v2; simpl in H;
+      try solve [apply IHn1 in H; [apply H | omega | apply H1]];
+      try solve [inversion H; congruence].
+    omega.
+    destruct v1; destruct v2; simpl in H; congruence.
+    omega.
+    destruct v1; simpl in H; congruence.
+  - simpl in H. simpl. apply H.
+  - destruct IHn as [IHn1 IHn2].
+    remember (S fuel) as Sfuel.
+    simpl. rewrite HeqSfuel in *.
+    simpl in H.
+    remember (ev s fuel env e1) as ev1.
+    destruct ev1 as [s1 v1].
+    symmetry in Heqev1.
+    apply IHn1 in Heqev1.
+    rewrite Heqev1.
+    destruct v1; simpl in H;
+      try solve [apply IHn1 in H; [apply H | omega | apply H1]];
+      try solve [inversion H; congruence].
+    omega.
+    destruct v1; simpl in H; congruence.
+  - destruct IHn as [IHn1 IHn2].
+    remember (S fuel) as Sfuel.
+    simpl. rewrite HeqSfuel in *.
+    simpl in H.
+    remember (ev s fuel env e) as ev1.
+    destruct ev1 as [s1 v1].
+    symmetry in Heqev1.
+    apply IHn1 in Heqev1.
+    rewrite Heqev1.
+    remember (lift s1 fuel v1) as lift1.
+    destruct lift1 as [s2 e2].
+    symmetry in Heqlift1.
+    apply IHn2 in Heqlift1.
+    rewrite Heqlift1.
+    apply H.
+    omega.
+    destruct v1; destruct e2; simpl in H; congruence.
+    omega.
+    destruct v1; simpl in H; congruence.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
   - admit.
   - admit.
   - admit.
@@ -861,6 +930,14 @@ Proof.
   - admit.
   - admit.
 Admitted.
+
+Lemma ev_fuel_mono: forall fuel s env e s' v,
+        ev s fuel env e = (s', v) ->
+        (forall msg, v <> VError msg) ->
+        ev s (S fuel) env e = (s', v).
+Proof.
+  intros. eapply all_mono; eauto.
+Qed.
 
 Lemma ev_fuel_monotonic: forall fuel fuel' s env e s' v,
         fuel' > fuel ->
