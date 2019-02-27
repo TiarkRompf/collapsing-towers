@@ -939,14 +939,29 @@ Proof.
   intros. eapply all_mono; eauto.
 Qed.
 
+Lemma ev_fuel_monotonic_delta: forall d fuel s env e s' v,
+        ev s fuel env e = (s', v) ->
+        (forall msg, v <> VError msg) ->
+        ev s (fuel+d) env e = (s', v).
+Proof.
+  intros d. induction d; intros.
+  - rewrite <- plus_n_O. assumption.
+  - rewrite <- plus_n_Sm. eapply ev_fuel_mono; eauto.
+Qed.
+
 Lemma ev_fuel_monotonic: forall fuel fuel' s env e s' v,
         fuel' > fuel ->
         ev s fuel env e = (s', v) ->
         (forall msg, v <> VError msg) ->
         ev s fuel' env e = (s', v).
 Proof.
-  admit.
-Admitted.
+  intros.
+  remember (fuel'-fuel) as d.
+  assert (fuel'=fuel+d) as A. {
+    subst. omega.
+  }
+  rewrite A. eapply ev_fuel_monotonic_delta; eauto.
+Qed.
 
 Lemma lift_monotonic: forall fuel fuel' s e s' v,
         fuel' > fuel ->
