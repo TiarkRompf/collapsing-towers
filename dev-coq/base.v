@@ -1029,8 +1029,8 @@ Proof.
     destruct v1. congruence. congruence. congruence. congruence. congruence.
     inversion H. subst. apply H1.
 
-  - admit.
-  - admit.
+  - simpl in H. simpl. apply H.
+  - simpl in H. simpl. apply H.
   - admit.
   - admit.
   - admit.
