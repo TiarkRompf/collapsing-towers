@@ -1031,10 +1031,63 @@ Proof.
 
   - simpl in H. simpl. apply H.
   - simpl in H. simpl. apply H.
+  - destruct IHn as [IHn1 IHn2].
+    simpl in H. remember (S fuel) as Sfuel.
+    simpl. rewrite HeqSfuel in *.
+
+    remember (ev s fuel env e1) as ev1.
+    destruct ev1 as [s0 v0].
+    symmetry in Heqev1.
+    apply IHn1 in Heqev1.
+    rewrite Heqev1.
+
+    destruct v0. apply H.
+
+    remember (ev (fst s0, []) fuel env e2) as ev2.
+    destruct ev2 as [s1 v1].
+    symmetry in Heqev2.
+    apply IHn1 in Heqev2.
+    rewrite Heqev2.
+
+    remember (ev (fst s0, []) fuel env e3) as ev3.
+    destruct ev3 as [s2 v3].
+    symmetry in Heqev3.
+    apply IHn1 in Heqev3.
+    rewrite Heqev3.
+
+    destruct v1; destruct v3; apply H.
+
+    omega. destruct v1; destruct v3; try congruence.
+    omega. destruct v1; try congruence.
+
+    destruct n1.
+
+    remember (ev s0 fuel env e3) as ev2.
+    destruct ev2 as [s1 v1].
+    symmetry in Heqev2.
+    apply IHn1 in Heqev2.
+    rewrite Heqev2.
+    apply H.
+    omega. inversion H. subst. apply H1.
+
+    remember (ev s0 fuel env e2) as ev2.
+    destruct ev2 as [s1 v1].
+    symmetry in Heqev2.
+    apply IHn1 in Heqev2.
+    rewrite Heqev2.
+    apply H.
+    omega. inversion H. subst. apply H1.
+
+    inversion H. subst. reflexivity.
+    inversion H. subst. reflexivity.
+    inversion H. subst. reflexivity.
+
+    omega. destruct v0; try congruence.
+
   - admit.
   - admit.
   - admit.
-  - admit.
+
   - simpl in H. simpl. apply H.
   - remember (S fuel) as Sfuel.
     simpl. rewrite HeqSfuel in *.
