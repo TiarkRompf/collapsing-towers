@@ -352,7 +352,7 @@ Lemma env_inv1_extend: forall env1 e1,
 Proof.
   intros.
   simpl in H0.
-  case_eq (n =? Datatypes.length env1); intros E.
+  case_eq ((n =? Datatypes.length env1)%nat); intros E.
   rewrite E in H0. inversion H0. eexists. reflexivity.
   rewrite E in H0. eapply H. eapply H0.
 Qed.
@@ -364,7 +364,7 @@ Lemma env_inv2_extend: forall env1 env2 e1,
 Proof.
   intros.
   simpl in H1.
-  case_eq (n =? Datatypes.length env1); intros E.
+  case_eq ((n =? Datatypes.length env1)%nat); intros E.
   rewrite E in H1. inversion H1. subst.
   simpl. rewrite <- H. rewrite E. reflexivity.
   simpl. rewrite <- H. rewrite E.
