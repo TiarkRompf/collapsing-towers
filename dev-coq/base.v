@@ -849,7 +849,7 @@ Lemma all_mono: forall fuel0,
 Proof.
   intros n. induction n. repeat split; intros; omega.
   repeat split; intros; destruct fuel; try solve [simpl in H; congruence];
-    destruct e.
+  [destruct e | destruct v].
   - simpl in H.
     case_eq (index n1 env).
     intros v1 E. simpl. rewrite E in *. inversion H. subst. reflexivity.
@@ -1041,14 +1041,7 @@ Proof.
   - admit.
   - admit.
   - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
+  - simpl. simpl in H. apply H.
 Admitted.
 
 Lemma ev_fuel_mono: forall fuel s env e s' v,
