@@ -1102,7 +1102,18 @@ Proof.
     omega. destruct v2; try congruence. destruct v1; try congruence.
     omega. destruct v1; try congruence.
 
-  - admit.
+  - simpl in H.
+    remember (S fuel) as Sfuel.
+    simpl. rewrite HeqSfuel in *.
+    destruct IHn as [IHn1 IHn2].
+    remember (ev s fuel env e) as ev1.
+    destruct ev1 as [s1 v1].
+    symmetry in Heqev1.
+    apply IHn1 in Heqev1.
+    rewrite Heqev1.
+    apply H.
+    omega. destruct v1; destruct op; try congruence.
+
   - admit.
 
   - simpl in H. simpl. apply H.
