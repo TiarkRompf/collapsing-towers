@@ -1190,23 +1190,38 @@ Proof.
   rewrite A. eapply ev_fuel_monotonic_delta; eauto.
 Qed.
 
-Lemma lift_monotonic: forall fuel fuel' s e s' v,
+Lemma lift_fuel_monotonic_delta: forall d fuel s e s' v,
+        lift s fuel v = (s', e) ->
+        (forall msg, e <> EError msg) ->
+        lift s (fuel+d) v = (s', e).
+Proof.
+  intros d. induction d; intros.
+  - rewrite <- plus_n_O. assumption.
+  - rewrite <- plus_n_Sm. eapply all_mono; eauto.
+Qed.
+
+Lemma lift_fuel_monotonic: forall fuel fuel' s e s' v,
         fuel' > fuel ->
         lift s fuel v = (s', e) ->
-        (forall msg, v <> VError msg) ->
+        (forall msg, e <> EError msg) ->
         lift s fuel' v = (s', e).
 Proof.
-  admit.
-Admitted.
+  intros.
+  remember (fuel'-fuel) as d.
+  assert (fuel'=fuel+d) as A. {
+    subst. omega.
+  }
+  rewrite A. eapply lift_fuel_monotonic_delta; eauto.
+Qed.
 
-Lemma correctness_of_interpretation_inner: forall n, forall fuel, fuel < n -> forall p s names r Venv_self,
-     Venv_self = VClo [(src_to_val (to_src names [] p));Vev;Vid;Vid] evl_body ->
-     ev s fuel [Vid;Venv_self;(src_to_val (to_src names [] p));Vev;Vid;Vid] evl_body = r ->
-     (exists s' msg, r = (s', VError msg)) \/ r = ev s fuel [] p.
+Lemma correctness_of_interpretation_inner: forall n, forall fuel, fuel < n -> forall p s names env' r Venv_self,
+     Venv_self = VClo [(src_to_val (to_src names env' p));Vev;Vid;Vid] evl_body ->
+     ev s fuel [Vid;Venv_self;(src_to_val (to_src names env' p));Vev;Vid;Vid] evl_body = r ->
+     (exists s' msg, r = (s', VError msg)) \/ r = ev s fuel (map VStr env') p.
 Proof.
   intros nMax. induction nMax; intros fuel Hfuel.
   inversion Hfuel. unfold n_ev in *. simpl in *.
-  intros p s names r Venv_self HeqVenv_self H.
+  intros p s names env' r Venv_self HeqVenv_self H.
   destruct fuel.
   simpl in H. left. subst. repeat eexists.
   simpl in H.
@@ -1215,11 +1230,110 @@ Proof.
   destruct fuel.
   simpl in H. left. subst. repeat eexists.
   destruct p.
-  - simpl in H. left. subst. repeat eexists.
+  - simpl1 H r p0 Heqp0.
+    case_eq (index n0 env').
+    intros s0 E. rewrite E in H.
+    simpl in H. rewrite E in H.
+    simpl in H.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    simpl2 H r p0 Heqp0.
+    simpl1 H r p0 Heqp0.
+    unfold Vid at 1 in H.
+    simpl1 H r p0 Heqp0.
+    simpl in H.
+    right. simpl. admit.
+    intros E. rewrite E in H.
+    simpl in H. inversion H. subst. left. repeat eexists.
   - admit.
+
+  - remember (src_to_val (to_src names env' (ELam p))) as p_src_val.
+    simpl in Heqp_src_val.
+    remember [Vid; Venv_self; p_src_val; Vev; Vid; Vid] as env0.
+    simpl1 H r p0 Heqp0.
+    assert (index n_exp env0 = Some p_src_val) as Hip. {
+      unfold n_exp. rewrite Heqenv0. simpl. reflexivity.
+    }
+    rewrite Hip in H. rewrite Heqp_src_val in H at 1.
+    destruct names as [|f names].
+    simpl in H. left. subst. repeat eexists.
+    destruct names as [|x names].
+    simpl in H. left. subst. repeat eexists.
+    simpl in Heqp_src_val.
+    simpl in H.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    simpl2 H r p0 Heqp0.
+    rewrite Hip in H. rewrite Heqp_src_val in H at 1.
+    Arguments string_dec: simpl never.
+    simpl1 H r p0 Heqp0.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    rewrite ev_str with (t:="quote") in H.
+    assert (forall fuel, ev s (S (S fuel)) env0 (EOp1 OCar (EVar n_exp)) = (s, VStr "lam")) as Hcar. {
+      intros. simpl. rewrite Hip. rewrite Heqp_src_val. reflexivity.
+    }
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    rewrite (Hcar fuel) in H.
+    remember (if string_dec "quote" "lam" then 1 else 0) as b.
+    vm_compute in Heqb. rewrite Heqb in H.
+    assert (forall fuel op e1 e2, op <> "lam" ->
+      ev s (S (S (S (S fuel)))) env0 (EIf (EOp2 OEq (EStr op) (EOp1 OCar (EVar n_exp))) e1 e2) = ev s (S (S (S fuel))) env0 e2) as Helse. {
+      intros fuel0 op e1 e2  Hnotop.
+      remember (S (S (S fuel0))) as fuel03.
+      simpl.
+      rewrite Heqfuel03.
+      remember (S (S fuel0)) as fuel02.
+      simpl.
+      rewrite Heqfuel02.
+      remember (S fuel0) as fuel01.
+      rewrite ev_str with (t:=op).
+      rewrite Heqfuel01.
+      rewrite (Hcar fuel0).
+      remember (string_dec op "lam") as cmp.
+      case_eq cmp.
+      intros. congruence. intros ? Hcmp.
+      auto.
+    }
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. left. subst. repeat eexists.
+    remember (S (S fuel)) as fuel2.
+    simpl in H.
+    rewrite Heqfuel2 in H.
+    rewrite ev_str in H.
+    rewrite (Hcar fuel) in H.
+    remember (if string_dec "lam" "lam" then 1 else 0) as yes.
+    vm_compute in Heqyes. rewrite Heqyes in H.
+    remember (S (S fuel)) as fuel2'.
+    simpl in H.
+    rewrite Heqfuel2' in H.
+    rewrite ev_var with (v:=Vid) in H.
+    unfold Vid in H at 1.
+    simpl1 H r p0 Heqp0.
+    simpl in H.
+    right. simpl.
+    (* TODO: problem -- the closure has overhead *)
+    admit.
+    unfold n_l. rewrite Heqenv0. auto. congruence. congruence. congruence. congruence. congruence.
+
   - admit.
-  - admit.
-  - remember (src_to_val (to_src names [] (ELift p))) as p_src_val.
+  - remember (src_to_val (to_src names env' (ELift p))) as p_src_val.
     simpl in Heqp_src_val.
     remember [Vid; Venv_self; p_src_val; Vev; Vid; Vid] as env0.
     simpl1 H r p0 Heqp0.
@@ -1299,7 +1413,7 @@ Proof.
     remember (S (S fuel)) as fuel2'.
     simpl in H.
     rewrite Heqfuel2' in H.
-    remember (src_to_val (to_src names [] p)) as p1_src_val.
+    remember (src_to_val (to_src names env' p)) as p1_src_val.
     assert (forall fuel, ev s (S (S (S fuel))) env0 (EOp1 OCar (EOp1 OCdr (EVar n_exp))) = (s, p1_src_val)) as A. {
       intros. simpl.
       rewrite Hip. rewrite Heqp_src_val at 1. reflexivity.
@@ -1420,11 +1534,11 @@ Proof.
     rewrite B. rewrite B in H.
     remember (lift s1 (S (S (S (S (S fuel))))) v1) as r2.
     destruct r2 as [s2 e2].
-    rewrite lift_monotonic with (e:=e2) (s':=s2) (fuel:=(S (S (S (S (S fuel)))))).
+    rewrite lift_fuel_monotonic with (e:=e2) (s':=s2) (fuel:=(S (S (S (S (S fuel)))))).
     destruct e2; try auto.
-    omega. auto. auto. omega. auto. admit.
+    omega. auto. admit. omega. auto. admit.
     congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence.
-  - remember (src_to_val (to_src names [] (ERun p1 p2))) as p_src_val.
+  - remember (src_to_val (to_src names env' (ERun p1 p2))) as p_src_val.
     simpl in Heqp_src_val.
     simpl1 H r p0 Heqp0.
     remember [Vid; Venv_self; p_src_val; Vev; Vid; Vid] as env0.
