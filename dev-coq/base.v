@@ -1036,7 +1036,21 @@ Proof.
   - admit.
   - admit.
   - simpl in H. simpl. apply H.
-  - admit.
+  - remember (S fuel) as Sfuel.
+    simpl. rewrite HeqSfuel in *.
+    simpl in H.
+    remember (fresh s) as fs.
+    destruct fs as [s1 v1].
+    remember (fresh s1) as fs1.
+    destruct fs1 as [s2 v2].
+    remember (ev (fst s2, []) fuel (VCode v2 :: VCode v1 :: env) e0) as ev0.
+    destruct ev0 as [s0 v0].
+    destruct IHn as [IHn1 IHn2].
+    symmetry in Heqev0.
+    apply IHn1 in Heqev0.
+    rewrite Heqev0. apply H.
+    omega.
+    destruct v0; try congruence.
   - simpl in H. simpl. apply H.
   - simpl in H. simpl. apply H.
   - simpl in H. simpl. apply H.
