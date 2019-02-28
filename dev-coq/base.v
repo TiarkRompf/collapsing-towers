@@ -1035,12 +1035,12 @@ Proof.
   - admit.
   - admit.
   - admit.
+  - simpl in H. simpl. apply H.
   - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
+  - simpl in H. simpl. apply H.
+  - simpl in H. simpl. apply H.
+  - simpl in H. simpl. apply H.
+  - simpl in H. simpl. apply H.
   - simpl. simpl in H. apply H.
 Admitted.
 
