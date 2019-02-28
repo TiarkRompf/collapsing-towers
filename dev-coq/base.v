@@ -301,6 +301,7 @@ with ev (s: state) (fuel: nat) (env: list val) (e: exp): (state * val) :=
       | (s0, VError msg) => (s0, VError msg)
       | (s0, VCode v0) =>
         match ev (fst s0, nil) fuel env e1 with
+        | (s1, VError msg) => (s1, VError msg)
         | (s1, v1) => reflectc s0 (ERun v0 (reifyc (s1,v1)))
         end
       | (s0, _) =>
@@ -908,7 +909,126 @@ Proof.
     destruct v1; destruct e2; simpl in H; congruence.
     omega.
     destruct v1; simpl in H; congruence.
-  - admit.
+  - destruct IHn as [IHn1 IHn2].
+    remember (S fuel) as Sfuel.
+    simpl. rewrite HeqSfuel in *.
+    simpl in H.
+    remember (ev s fuel env e1) as ev1.
+    destruct ev1 as [s1 v1].
+    symmetry in Heqev1.
+    apply IHn1 in Heqev1.
+    rewrite Heqev1.
+
+    unfold reifyv in *. unfold reifyc in *.
+
+    destruct v1.
+
+    remember (ev (Datatypes.length env, snd s1) fuel env e2) as ev2'.
+    destruct ev2' as [ s2' v2'].
+    symmetry in Heqev2'.
+    apply IHn1 in Heqev2'.
+    rewrite Heqev2'.
+    remember (    ev (fst s1, []) fuel env
+      match v2' with
+      | VCode e => reify (s2', e)
+      | VError msg => EError msg
+      | _ => EError "expected code"
+      end) as ev2''.
+    destruct ev2'' as [s2'' v2''].
+    symmetry in Heqev2''.
+    apply IHn1 in Heqev2''.
+    rewrite Heqev2''. apply H.
+
+    omega. destruct s2''. destruct l. inversion H. subst. apply H1.
+    destruct v2''. inversion H. subst. congruence. congruence. congruence. congruence. congruence.
+    inversion H. subst. congruence.
+    omega.
+    destruct v2'. destruct fuel. simpl in H. congruence. congruence. congruence. congruence. congruence. congruence.
+    destruct fuel. simpl in H. inversion H. subst. congruence. simpl in H. inversion H. subst. congruence.
+
+    remember (ev (fst s1, []) fuel env e2) as ev2.
+    destruct ev2 as [s2 v2].
+    symmetry in Heqev2.
+    apply IHn1 in Heqev2.
+    rewrite Heqev2.
+    apply H.
+    omega. destruct v2; simpl in H. congruence. congruence. congruence. congruence. congruence. unfold reflectc in H. unfold reflect in H. simpl in H.
+    inversion H. subst. apply H1.
+
+    remember (ev (Datatypes.length env, snd s1) fuel env e2) as ev2'.
+    destruct ev2' as [ s2' v2'].
+    symmetry in Heqev2'.
+    apply IHn1 in Heqev2'.
+    rewrite Heqev2'.
+    remember (    ev (fst s1, []) fuel env
+      match v2' with
+      | VCode e => reify (s2', e)
+      | VError msg => EError msg
+      | _ => EError "expected code"
+      end) as ev2''.
+    destruct ev2'' as [s2'' v2''].
+    symmetry in Heqev2''.
+    apply IHn1 in Heqev2''.
+    rewrite Heqev2''. apply H.
+
+    omega. destruct s2''. destruct l. inversion H. subst. apply H1.
+    destruct v2''. inversion H. subst. congruence. congruence. congruence. congruence. congruence.
+    inversion H. subst. congruence.
+    omega.
+    destruct v2'. destruct fuel. simpl in H. congruence. congruence. congruence. congruence. congruence. congruence.
+    destruct fuel. simpl in H. inversion H. subst. congruence. simpl in H. inversion H. subst. congruence.
+
+    remember (ev (Datatypes.length env, snd s1) fuel env e2) as ev2'.
+    destruct ev2' as [ s2' v2'].
+    symmetry in Heqev2'.
+    apply IHn1 in Heqev2'.
+    rewrite Heqev2'.
+    remember (    ev (fst s1, []) fuel env
+      match v2' with
+      | VCode e => reify (s2', e)
+      | VError msg => EError msg
+      | _ => EError "expected code"
+      end) as ev2''.
+    destruct ev2'' as [s2'' v2''].
+    symmetry in Heqev2''.
+    apply IHn1 in Heqev2''.
+    rewrite Heqev2''. apply H.
+
+    omega. destruct s2''. destruct l. inversion H. subst. apply H1.
+    destruct v2''. inversion H. subst. congruence. congruence. congruence. congruence. congruence.
+    inversion H. subst. congruence.
+    omega.
+    destruct v2'. destruct fuel. simpl in H. congruence. congruence. congruence. congruence. congruence. congruence.
+    destruct fuel. simpl in H. inversion H. subst. congruence. simpl in H. inversion H. subst. congruence.
+
+    remember (ev (Datatypes.length env, snd s1) fuel env e2) as ev2'.
+    destruct ev2' as [ s2' v2'].
+    symmetry in Heqev2'.
+    apply IHn1 in Heqev2'.
+    rewrite Heqev2'.
+    remember (    ev (fst s1, []) fuel env
+      match v2' with
+      | VCode e => reify (s2', e)
+      | VError msg => EError msg
+      | _ => EError "expected code"
+      end) as ev2''.
+    destruct ev2'' as [s2'' v2''].
+    symmetry in Heqev2''.
+    apply IHn1 in Heqev2''.
+    rewrite Heqev2''. apply H.
+
+    omega. destruct s2''. destruct l. inversion H. subst. apply H1.
+    destruct v2''. inversion H. subst. congruence. congruence. congruence. congruence. congruence.
+    inversion H. subst. congruence.
+    omega.
+    destruct v2'. destruct fuel. simpl in H. congruence. congruence. congruence. congruence. congruence. congruence.
+    destruct fuel. simpl in H. inversion H. subst. congruence. simpl in H. inversion H. subst. congruence.
+
+    apply H.
+    omega.
+    destruct v1. congruence. congruence. congruence. congruence. congruence.
+    inversion H. subst. apply H1.
+
   - admit.
   - admit.
   - admit.
