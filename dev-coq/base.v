@@ -1718,7 +1718,41 @@ Proof.
                     (EIf (EOp2 OEq (EVar 9) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar 6)
                        (EIf (EOp2 OEq (EVar 9) (EOp1 OCar (EOp1 OCdr (EOp1 OCdr (EVar n_exp))))) (EVar 7) (EApp (EVar n_env) (EVar 9))));
                  VClo [src_val_p; VClo [Vlift; Vid] (ELam evl_body); Vlift; Vid] evl_body; src_to_val (to_src names (x :: f :: env') p); Vevl; Vlift; Vid]
-                 (EApp (EVar n_env) (EStr x0)) = (s, VCode e))) -> index n (v2 :: v1 :: env2) = Some e)) as F by admit.
+                 (EApp (EVar n_env) (EStr x0)) = (s, VCode e))) -> index n (v2 :: v1 :: env2) = Some e)) as F. {
+      intros.
+      destruct H0 as [Hi [fuel' Hev]].
+      simpl in Hi.
+      simpl.
+      assert (Datatypes.length env' = Datatypes.length env2) as L by admit.
+      case_eq ((n0 =? S (Datatypes.length env'))%nat); intros E0.
+      rewrite E0 in Hi. inversion Hi. subst. rewrite <- L. rewrite E0.
+      destruct fuel'.
+      simpl in Hev. inversion Hev.
+      simpl in Hev.
+      destruct fuel'.
+      simpl in Hev. inversion Hev.
+      simpl in Hev.
+      destruct fuel'.
+      simpl in Hev. inversion Hev.
+      simpl in Hev.
+      destruct fuel'.
+      simpl in Hev. inversion Hev.
+      rewrite ev_var with (v:=VStr x0) in Hev.
+      simpl in Hev.
+      destruct fuel'.
+      simpl in Hev. inversion Hev.
+      simpl in Hev.
+      destruct fuel'.
+      simpl in Hev. inversion Hev.
+      erewrite ev_var in Hev; try solve [unfold n_exp; simpl; reflexivity].
+      simpl3 Hev p0 Heqp0.
+      case_eq (string_dec x0 f). intros. subst. rewrite H0 in Hev.
+      (* something weird *)
+      admit.
+      admit.
+      simpl. reflexivity.
+      admit.
+    }
     specialize (IHnMax F).
     rewrite Heqsrc_val_p in *.
     unfold Vevl in *.
