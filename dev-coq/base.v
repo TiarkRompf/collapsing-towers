@@ -1687,7 +1687,25 @@ Proof.
       subst. rewrite H2.
       simpl1g p0 Heqp0.
       subst. rewrite H1.
-      admit. apply Hex.
+      remember (S (S (S (S fuel')))) as fuel14.
+      simpl. rewrite Heqfuel14.
+      rewrite ev_var with (v:=venv).
+      rewrite ev_var with (v:=VStr x0).
+      destruct Hex as [e'' Hex]. rewrite Hex in Hev.
+      destruct fuel'.
+      simpl in Hev. inversion Hev.
+      simpl in Hev.
+      destruct fuel'.
+      simpl in Hev. inversion Hev.
+      rewrite ev_var with (v:=venv) in Hev.
+      rewrite ev_str in Hev.
+      destruct venv; try solve [simpl in Hev; inversion Hev].
+      eapply ev_fuel_monotonic. instantiate (1:=S fuel'). omega. rewrite Hex. eapply Hev.
+      rewrite Hex. congruence.
+      unfold n_env. simpl. reflexivity.
+      simpl. reflexivity.
+      unfold n_env. simpl. reflexivity.
+      eapply Hex.
       simpl. rewrite Heqenv0. simpl. reflexivity.
     }
     specialize (IHnMax E).
