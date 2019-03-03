@@ -1178,7 +1178,7 @@ Proof.
 Qed.
 
 Lemma ev_fuel_monotonic: forall fuel fuel' s env e s' v,
-        fuel' > fuel ->
+        fuel' >= fuel ->
         ev s fuel env e = (s', v) ->
         (forall msg, v <> VError msg) ->
         ev s fuel' env e = (s', v).
@@ -1202,7 +1202,7 @@ Proof.
 Qed.
 
 Lemma lift_fuel_monotonic: forall fuel fuel' s e s' v,
-        fuel' > fuel ->
+        fuel' >= fuel ->
         lift s fuel v = (s', e) ->
         (forall msg, e <> EError msg) ->
         lift s fuel' v = (s', e).
@@ -1213,6 +1213,21 @@ Proof.
     subst. omega.
   }
   rewrite A. eapply lift_fuel_monotonic_delta; eauto.
+Qed.
+
+Lemma same_if_not_err: forall s env e fuel1 s1 v1 fuel2 s2 v2,
+    ev s fuel1 env e = (s1, v1) ->
+    ev s fuel2 env e = (s2, v2) ->
+    (forall msg, v1 <> VError msg) ->
+    (forall msg, v2 <> VError msg) ->
+    s1=s2 /\ v1=v2.
+Proof.
+  intros s env e fuel1 s1 v1 fuel2 s2 v2 Hev1 Hev2 Herr1 Herr2.
+  destruct (dec_lt fuel1 fuel2) as [Hlt | Hlt].
+  apply ev_fuel_monotonic with (fuel':=fuel2) in Hev1. rewrite Hev1 in Hev2. inversion Hev2. subst. split; reflexivity.
+  omega. assumption.
+  apply ev_fuel_monotonic with (fuel':=fuel1) in Hev2. rewrite Hev1 in Hev2. inversion Hev2. subst. split; reflexivity.
+  omega. assumption.
 Qed.
 
 Definition Vlift := VClo [] (ELift (EVar 1)).
@@ -1267,7 +1282,10 @@ Proof.
     destruct venv; simpl in Ha; try congruence.
     rewrite ev_var with (v:=VStr s0) in H.
     subst.
-    right. exists e0. split. admit. simpl.
+    destruct (error_or_not e') as [[msg Herr] | Hmsg].
+    subst. left. repeat eexists.
+    eapply same_if_not_err with (s1:=s') (v1:=e') (s2:=s) (v2:=VCode e0) in Hmsg. destruct Hmsg. subst.
+    right. exists e0. split. reflexivity. simpl.
     specialize (Henv2 n0 s0 s e0).
     assert (index n0 env' = Some s0 /\
           (exists fuel : nat,
@@ -1279,7 +1297,8 @@ Proof.
       rewrite ev_str. eapply Ha.
       unfold n_env. simpl. reflexivity.
     }
-    specialize (Henv2 A). rewrite Henv2. admit.
+    specialize (Henv2 A). rewrite Henv2. reflexivity.
+    eapply H. eapply Ha. congruence.
     unfold n_exp. rewrite Heqenv0. simpl. reflexivity.
     unfold n_env. rewrite Heqenv0. simpl. reflexivity.
     unfold n_env. rewrite Heqenv0. simpl. reflexivity.
