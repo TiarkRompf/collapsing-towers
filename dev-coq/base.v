@@ -1216,10 +1216,11 @@ Proof.
 Qed.
 
 Definition Vlift := VClo [] (ELift (EVar 1)).
+Definition Vevl := VClo [Vlift;Vid] (ELam evl_body).
 
 Theorem opt_compilation: forall n, forall fuel, fuel < n -> forall p s names env' env2 s' v' Venv_self env0 venv,
-    Venv_self = VClo [(src_to_val (to_src names env' p));Vev;Vlift;Vid] evl_body ->
-    env0 = [venv;Venv_self;(src_to_val (to_src names env' p));Vev;Vlift;Vid] ->
+    Venv_self = VClo [(src_to_val (to_src names env' p));Vevl;Vlift;Vid] evl_body ->
+    env0 = [venv;Venv_self;(src_to_val (to_src names env' p));Vevl;Vlift;Vid] ->
     (forall n x s, index n env' = Some x -> exists fuel v, ev s fuel env0 (EApp (EVar n_env) (EStr x)) = (s, v) /\ exists e, v = VCode e) ->
     (forall n x s e, index n env' = Some x /\ exists fuel, ev s fuel env0 (EApp (EVar n_env) (EStr x)) = (s, VCode e) -> index n env2 = Some e) ->
     ev s fuel env0 evl_body = (s', v') ->
@@ -1407,8 +1408,8 @@ Proof.
     simpl3 H p0 Heqp0.
     destruct fuel.
     simpl in H. inversion H. subst. left. repeat eexists.
-    rewrite ev_var with (v:=Vev) in H.
-    unfold Vev in H.
+    rewrite ev_var with (v:=Vevl) in H.
+    unfold Vevl in H.
     destruct fuel.
     simpl in H. inversion H. subst. left. repeat eexists.
     destruct fuel.
@@ -1443,14 +1444,71 @@ Proof.
     simpl3 H p0 Heqp0.
     rewrite Heqfuel4 in H.
     simpl3 H p0 Heqp0.
-    remember (           ev (fst s2, []) (S (S (S (S (S (S fuel))))))
+    remember (ev (fst s2, []) (S (S (S (S (S (S fuel))))))
              [VClo (VCode v2 :: VCode v1 :: env0)
                 (EIf (EOp2 OEq (EVar 9) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar 6)
                    (EIf (EOp2 OEq (EVar 9) (EOp1 OCar (EOp1 OCdr (EOp1 OCdr (EVar n_exp))))) (EVar 7) (EApp (EVar n_env) (EVar 9))));
-              VClo [src_val_p; VClo [Vid; Vid] (ELam evl_body); Vid; Vid] evl_body; src_val_p; VClo [Vid; Vid] (ELam evl_body); Vid; Vid] evl_body) as evi.
+             VClo [src_val_p; VClo [Vlift; Vid] (ELam evl_body); Vlift; Vid] evl_body; src_val_p; VClo [Vlift; Vid] (ELam evl_body); Vlift; Vid] evl_body) as evi.
     destruct evi as [si' vi'].
-    (*eapply IHnMax in Heqevi.*)
-    admit.
+    assert (S (S (S (S (S (S fuel))))) < nMax) as B by omega.
+    assert (VClo [src_val_p; VClo [Vlift; Vid] (ELam evl_body); Vlift; Vid] evl_body = VClo [src_to_val (to_src names (x :: f :: env') p); Vevl; Vlift; Vid] evl_body) as C. {
+      rewrite Heqsrc_val_p. simpl. reflexivity.
+    }
+    specialize (IHnMax (S (S (S (S (S (S fuel)))))) B p (fst s2, []) names (x :: f :: env') (v2 :: v1 :: env2) si' vi'
+                       (VClo [src_val_p; VClo [Vlift; Vid] (ELam evl_body); Vlift; Vid] evl_body)
+                       [(VClo (VCode v2 :: VCode v1 :: env0)
+                (EIf (EOp2 OEq (EVar 9) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar 6)
+                     (EIf (EOp2 OEq (EVar 9) (EOp1 OCar (EOp1 OCdr (EOp1 OCdr (EVar n_exp))))) (EVar 7) (EApp (EVar n_env) (EVar 9)))));
+                        VClo [src_val_p; VClo [Vlift; Vid] (ELam evl_body); Vlift; Vid] evl_body;
+                        (src_to_val (to_src names (x :: f :: env') p));Vevl;Vlift;Vid]
+                       (VClo (VCode v2 :: VCode v1 :: env0)
+                (EIf (EOp2 OEq (EVar 9) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar 6)
+                     (EIf (EOp2 OEq (EVar 9) (EOp1 OCar (EOp1 OCdr (EOp1 OCdr (EVar n_exp))))) (EVar 7) (EApp (EVar n_env) (EVar 9)))))
+               C).
+
+    assert ([VClo (VCode v2 :: VCode v1 :: env0)
+      (EIf (EOp2 OEq (EVar 9) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar 6)
+           (EIf (EOp2 OEq (EVar 9) (EOp1 OCar (EOp1 OCdr (EOp1 OCdr (EVar n_exp))))) (EVar 7) (EApp (EVar n_env) (EVar 9))));
+             VClo [src_val_p; VClo [Vlift; Vid] (ELam evl_body); Vlift; Vid] evl_body;
+           src_to_val (to_src names (x :: f :: env') p); Vevl; Vlift; Vid] =
+           [VClo (VCode v2 :: VCode v1 :: env0)
+              (EIf (EOp2 OEq (EVar 9) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar 6)
+                 (EIf (EOp2 OEq (EVar 9) (EOp1 OCar (EOp1 OCdr (EOp1 OCdr (EVar n_exp))))) (EVar 7) (EApp (EVar n_env) (EVar 9))));
+            VClo [src_val_p; VClo [Vlift; Vid] (ELam evl_body); Vlift; Vid] evl_body; src_to_val (to_src names (x :: f :: env') p); Vevl; Vlift; Vid]) as D. {
+      simpl. reflexivity.
+    }
+
+    specialize (IHnMax D).
+
+    assert (forall (n : nat) (x0 : string) (s : state),
+            index n (x :: f :: env') = Some x0 ->
+            exists (fuel : nat) (v : val),
+              ev s fuel
+                [VClo (VCode v2 :: VCode v1 :: env0)
+                   (EIf (EOp2 OEq (EVar 9) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar 6)
+                      (EIf (EOp2 OEq (EVar 9) (EOp1 OCar (EOp1 OCdr (EOp1 OCdr (EVar n_exp))))) (EVar 7) (EApp (EVar n_env) (EVar 9))));
+                VClo [src_val_p; VClo [Vlift; Vid] (ELam evl_body); Vlift; Vid] evl_body; src_to_val (to_src names (x :: f :: env') p); Vevl; Vlift; Vid]
+                (EApp (EVar n_env) (EStr x0)) = (s, v) /\ (exists e : exp, v = VCode e)) as E by admit.
+    specialize (IHnMax E).
+
+    assert ((forall (n : nat) (x0 : string) (s : state) (e : exp),
+            index n (x :: f :: env') = Some x0 /\
+            (exists fuel : nat,
+               ev s fuel
+                 [VClo (VCode v2 :: VCode v1 :: env0)
+                    (EIf (EOp2 OEq (EVar 9) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar 6)
+                       (EIf (EOp2 OEq (EVar 9) (EOp1 OCar (EOp1 OCdr (EOp1 OCdr (EVar n_exp))))) (EVar 7) (EApp (EVar n_env) (EVar 9))));
+                 VClo [src_val_p; VClo [Vlift; Vid] (ELam evl_body); Vlift; Vid] evl_body; src_to_val (to_src names (x :: f :: env') p); Vevl; Vlift; Vid]
+                 (EApp (EVar n_env) (EStr x0)) = (s, VCode e) -> index n (v2 :: v1 :: env2) = Some e))) as F by admit.
+    specialize (IHnMax F).
+    rewrite Heqsrc_val_p in *.
+    unfold Vevl in *.
+    symmetry in Heqevi.
+    specialize (IHnMax Heqevi).
+    destruct IHnMax as [[msg Herr] | [e'' [Heq Hanf]]].
+    simpl in H. rewrite Herr in H. inversion H. subst. left. repeat eexists.
+    subst. simpl in H. inversion H. subst. right. eexists. split. reflexivity. simpl.
+    rewrite <- Heqfs. rewrite <- Heqfs1. rewrite <- Hanf. reflexivity.
     unfold n_exp. simpl. reflexivity.
     unfold n_ev. rewrite Heqenv0. simpl. reflexivity.
     simpl. reflexivity.
