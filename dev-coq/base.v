@@ -1233,6 +1233,25 @@ Qed.
 Definition Vlift := VClo [] (ELift (EVar 1)).
 Definition Vevl := VClo [Vlift;Vid] (ELam evl_body).
 
+
+      Ltac simpl1g p0 Heqp0 :=
+        match goal with
+        | [ |- (let (s, v) := ?e in ?body1) = ?r ] =>
+          remember (e) as p0;
+          simpl in Heqp0;
+          rewrite Heqp0;
+          clear Heqp0; clear p0
+        end.
+
+      Ltac simpl2g p0 Heqp0 :=
+        match goal with
+        | [ |- (let (s, v) := let (s, v) := ?e in ?body1 in ?body2) = ?r ] =>
+          remember (e) as p0;
+          simpl in Heqp0;
+          rewrite Heqp0;
+          clear Heqp0; clear p0
+        end.
+
 Theorem opt_compilation: forall n, forall fuel, fuel < n -> forall p s names env' env2 s' v' Venv_self env0 venv,
     Venv_self = VClo [(src_to_val (to_src names env' p));Vevl;Vlift;Vid] evl_body ->
     env0 = [venv;Venv_self;(src_to_val (to_src names env' p));Vevl;Vlift;Vid] ->
@@ -1519,7 +1538,87 @@ Proof.
                    (EIf (EOp2 OEq (EVar 9) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar 6)
                       (EIf (EOp2 OEq (EVar 9) (EOp1 OCar (EOp1 OCdr (EOp1 OCdr (EVar n_exp))))) (EVar 7) (EApp (EVar n_env) (EVar 9))));
                 VClo [src_val_p; VClo [Vlift; Vid] (ELam evl_body); Vlift; Vid] evl_body; src_to_val (to_src names (x :: f :: env') p); Vevl; Vlift; Vid]
-                (EApp (EVar n_env) (EStr x0)) = (s, v) /\ (exists e : exp, v = VCode e)) as E by admit.
+                (EApp (EVar n_env) (EStr x0)) = (s, v) /\ (exists e : exp, v = VCode e)) as E. {
+      intros.
+      simpl in H0.
+      case_eq ((n0 =? S (Datatypes.length env'))%nat); intros E.
+      remember (string_dec x0 f) as b1;
+      case_eq b1;
+      remember (string_dec x0 x0) as b2;
+      case_eq b2.
+
+      rewrite E in H0. inversion H0. subst.
+      exists 8. remember 7 as fuel07. exists (VCode v1). simpl.
+      rewrite Heqfuel07. remember 6 as fuel06. simpl.
+      rewrite Heqfuel06. remember 5 as fuel05. simpl.
+      rewrite Heqfuel05.
+      rewrite ev_var with (v:=VStr x0).
+      split.
+      simpl2g p0 Heqp0.
+      rewrite H2.
+      simpl. reflexivity. eexists. reflexivity.
+      simpl. reflexivity.
+
+      intros Ne. contradiction.
+
+      intros.
+      rewrite E in H0. inversion H0. subst.
+      exists 8. remember 7 as fuel07. exists (VCode v2). simpl.
+      rewrite Heqfuel07. remember 6 as fuel06. simpl.
+      rewrite Heqfuel06. remember 5 as fuel05. simpl.
+      rewrite Heqfuel05.
+      rewrite ev_var with (v:=VStr x0).
+      split.
+      simpl2g p0 Heqp0.
+      rewrite H2.
+      simpl1g p0 Heqp0.
+      rewrite H1.
+      simpl. reflexivity. eexists. reflexivity.
+      simpl. reflexivity.
+
+      intros Neq. contradiction.
+
+      rewrite E in H0.
+      case_eq ((n0 =? Datatypes.length env')%nat); intros E2.
+
+      remember (string_dec x0 x0) as b1;
+      case_eq b1;
+      remember (string_dec x0 x) as b2;
+      case_eq b2.
+
+      rewrite E2 in H0. inversion H0. subst.
+      exists 8. remember 7 as fuel07. exists (VCode v1). simpl.
+      rewrite Heqfuel07. remember 6 as fuel06. simpl.
+      rewrite Heqfuel06. remember 5 as fuel05. simpl.
+      rewrite Heqfuel05.
+      rewrite ev_var with (v:=VStr x0).
+      split.
+      simpl2g p0 Heqp0.
+      rewrite H2.
+      simpl. reflexivity. eexists. reflexivity.
+      simpl. reflexivity.
+
+      intros.
+      rewrite E2 in H0. inversion H0. subst.
+      exists 8. remember 7 as fuel07. exists (VCode v1). simpl.
+      rewrite Heqfuel07. remember 6 as fuel06. simpl.
+      rewrite Heqfuel06. remember 5 as fuel05. simpl.
+      rewrite Heqfuel05.
+      rewrite ev_var with (v:=VStr x0).
+      split.
+      simpl2g p0 Heqp0.
+      rewrite H2.
+      simpl. reflexivity. eexists. reflexivity.
+      simpl. reflexivity.
+
+      intros. contradiction.
+      intros. contradiction.
+
+      rewrite E2 in H0.
+      specialize (Henv1 n0 x0 s0 H0).
+      destruct Henv1 as [fuel' [v' [Hev Hex]]].
+      admit.
+    }
     specialize (IHnMax E).
 
     assert ((forall (n : nat) (x0 : string) (s : state) (e : exp),
