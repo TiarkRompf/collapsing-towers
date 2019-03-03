@@ -1617,7 +1617,78 @@ Proof.
       rewrite E2 in H0.
       specialize (Henv1 n0 x0 s0 H0).
       destruct Henv1 as [fuel' [v' [Hev Hex]]].
-      admit.
+
+      remember (string_dec x0 f) as b1;
+      case_eq b1;
+      remember (string_dec x0 x) as b2;
+      case_eq b2.
+
+      subst.
+      exists 8. remember 7 as fuel07. exists (VCode v1). simpl.
+      rewrite Heqfuel07. remember 6 as fuel06. simpl.
+      rewrite Heqfuel06. remember 5 as fuel05. simpl.
+      rewrite Heqfuel05.
+      rewrite ev_var with (v:=VStr x0).
+      split.
+      simpl2g p0 Heqp0.
+      rewrite H2.
+      simpl. reflexivity. eexists. reflexivity.
+      simpl. reflexivity.
+
+      intros. subst.
+      exists 8. remember 7 as fuel07. exists (VCode v1). simpl.
+      rewrite Heqfuel07. remember 6 as fuel06. simpl.
+      rewrite Heqfuel06. remember 5 as fuel05. simpl.
+      rewrite Heqfuel05.
+      rewrite ev_var with (v:=VStr f).
+      split.
+      simpl2g p0 Heqp0.
+      rewrite H2.
+      simpl. reflexivity. eexists. reflexivity.
+      simpl. reflexivity.
+
+
+      intros. subst.
+      exists 8. remember 7 as fuel07. exists (VCode v2). simpl.
+      rewrite Heqfuel07. remember 6 as fuel06. simpl.
+      rewrite Heqfuel06. remember 5 as fuel05. simpl.
+      rewrite Heqfuel05.
+      rewrite ev_var with (v:=VStr x).
+      split.
+      simpl2g p0 Heqp0.
+      rewrite H2.
+      simpl1g p0 Heqp0.
+      rewrite H1.
+      simpl. reflexivity. eexists. reflexivity.
+      simpl. reflexivity.
+
+      intros.
+      exists (S (S (S (S (S (S (S (S fuel')))))))).
+      remember (S (S (S (S (S (S (S fuel'))))))) as fuel07.
+      exists v'. simpl.
+      rewrite Heqfuel07.
+      remember (S (S (S (S (S (S fuel')))))) as fuel06. simpl.
+      rewrite Heqfuel06.
+      remember (S (S (S (S (S fuel'))))) as fuel05. simpl.
+      rewrite Heqfuel05.
+      rewrite ev_var with (v:=VStr x0).
+      split.
+      simpl2g p0 Heqp0.
+      rewrite Heqenv0.
+      Ltac simpl4g p0 Heqp0 :=
+        match goal with
+        | [ |- (let (s, v) := let (s, v) := let (s, v) := let (s, v) :=?e in ?body1 in ?body2 in ?body3 in ?body4) = ?r ] =>
+          remember (e) as p0;
+          simpl in Heqp0;
+          rewrite Heqp0;
+          clear Heqp0; clear p0
+        end.
+      simpl4g p0 Heqp0.
+      subst. rewrite H2.
+      simpl1g p0 Heqp0.
+      subst. rewrite H1.
+      admit. apply Hex.
+      simpl. rewrite Heqenv0. simpl. reflexivity.
     }
     specialize (IHnMax E).
 
