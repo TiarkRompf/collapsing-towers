@@ -1222,7 +1222,7 @@ Theorem opt_compilation: forall n, forall fuel, fuel < n -> forall p s names env
     Venv_self = VClo [(src_to_val (to_src names env' p));Vevl;Vlift;Vid] evl_body ->
     env0 = [venv;Venv_self;(src_to_val (to_src names env' p));Vevl;Vlift;Vid] ->
     (forall n x s, index n env' = Some x -> exists fuel v, ev s fuel env0 (EApp (EVar n_env) (EStr x)) = (s, v) /\ exists e, v = VCode e) ->
-    (forall n x s e, index n env' = Some x /\ exists fuel, ev s fuel env0 (EApp (EVar n_env) (EStr x)) = (s, VCode e) -> index n env2 = Some e) ->
+    (forall n x s e, (index n env' = Some x /\ exists fuel, ev s fuel env0 (EApp (EVar n_env) (EStr x)) = (s, VCode e)) -> index n env2 = Some e) ->
     ev s fuel env0 evl_body = (s', v') ->
     (exists msg, v' = VError msg) \/ (exists e', v' = VCode e' /\ (s', e') = (anf s env2 p)).
 Proof.
@@ -1267,7 +1267,19 @@ Proof.
     destruct venv; simpl in Ha; try congruence.
     rewrite ev_var with (v:=VStr s0) in H.
     subst.
-    admit.
+    right. exists e0. split. admit. simpl.
+    specialize (Henv2 n0 s0 s e0).
+    assert (index n0 env' = Some s0 /\
+          (exists fuel : nat,
+             ev s fuel [VClo env e1; VClo [src_to_val (to_src names env' (EVar n0)); Vevl; Vlift; Vid] evl_body; VStr s0; Vevl; Vlift; Vid]
+                (EApp (EVar n_env) (EStr s0)) = (s, VCode e0))) as A. {
+      split. apply E.
+      exists (S (S fuel')). remember (S fuel') as fuel1'. simpl. rewrite E. rewrite Heqfuel1' in *.
+      rewrite ev_var with (v:= VClo env e1).
+      rewrite ev_str. eapply Ha.
+      unfold n_env. simpl. reflexivity.
+    }
+    specialize (Henv2 A). rewrite Henv2. admit.
     unfold n_exp. rewrite Heqenv0. simpl. reflexivity.
     unfold n_env. rewrite Heqenv0. simpl. reflexivity.
     unfold n_env. rewrite Heqenv0. simpl. reflexivity.
@@ -1492,14 +1504,14 @@ Proof.
     specialize (IHnMax E).
 
     assert ((forall (n : nat) (x0 : string) (s : state) (e : exp),
-            index n (x :: f :: env') = Some x0 /\
+            (index n (x :: f :: env') = Some x0 /\
             (exists fuel : nat,
                ev s fuel
                  [VClo (VCode v2 :: VCode v1 :: env0)
                     (EIf (EOp2 OEq (EVar 9) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar 6)
                        (EIf (EOp2 OEq (EVar 9) (EOp1 OCar (EOp1 OCdr (EOp1 OCdr (EVar n_exp))))) (EVar 7) (EApp (EVar n_env) (EVar 9))));
                  VClo [src_val_p; VClo [Vlift; Vid] (ELam evl_body); Vlift; Vid] evl_body; src_to_val (to_src names (x :: f :: env') p); Vevl; Vlift; Vid]
-                 (EApp (EVar n_env) (EStr x0)) = (s, VCode e) -> index n (v2 :: v1 :: env2) = Some e))) as F by admit.
+                 (EApp (EVar n_env) (EStr x0)) = (s, VCode e))) -> index n (v2 :: v1 :: env2) = Some e)) as F by admit.
     specialize (IHnMax F).
     rewrite Heqsrc_val_p in *.
     unfold Vevl in *.
