@@ -796,9 +796,10 @@ Proof.
 Qed.
 
 Definition Vid := VClo [] (EVar 1).
+Definition Venv := VClo [] (EError "unbound var").
 Definition Vev := VClo [Vid;Vid] (ELam evl_body).
 
-Eval vm_compute in ev (0,[]) 100 [Vid;Vid;(src_to_val (to_src0 (EOp2 OPlus (ENat 1) (ENat 1))));Vev;Vid;Vid] evl_body.
+Eval vm_compute in ev (0,[]) 100 [Venv;Vid;(src_to_val (to_src0 (EOp2 OPlus (ENat 1) (ENat 1))));Vev;Vid;Vid] evl_body.
 
 Ltac simpl1 H p0 Heqp0 :=
   match goal with
@@ -825,14 +826,14 @@ Ltac simpl3 H p0 Heqp0 :=
     clear Heqp0; clear p0
   end.
 
-Lemma exp_apart_car: forall nocare s fuel a d,
-    ev s (S (S fuel)) [Vid; nocare; VPair a d; Vev; Vid; Vid] (EOp1 OCar (EVar n_exp)) = (s, a).
+Lemma exp_apart_car: forall venv nocare s fuel a d,
+    ev s (S (S fuel)) [venv; nocare; VPair a d; Vev; Vid; Vid] (EOp1 OCar (EVar n_exp)) = (s, a).
 Proof.
   intros. simpl. reflexivity.
 Qed.
 
-Lemma exp_apart_cdr: forall nocare s fuel a d,
-    ev s (S (S fuel)) [Vid; nocare; VPair a d; Vev; Vid; Vid] (EOp1 OCdr (EVar n_exp)) = (s, d).
+Lemma exp_apart_cdr: forall venv nocare s fuel a d,
+    ev s (S (S fuel)) [venv; nocare; VPair a d; Vev; Vid; Vid] (EOp1 OCdr (EVar n_exp)) = (s, d).
 Proof.
   intros. simpl. reflexivity.
 Qed.
@@ -1216,90 +1217,108 @@ Qed.
 
 Definition Vlift := VClo [] (ELift (EVar 1)).
 
-Theorem opt_compilation: forall n, forall fuel, fuel < n -> forall p s names env' s' e' Venv_self,
+Theorem opt_compilation: forall n, forall fuel, fuel < n -> forall p s names env' env2 s' v' Venv_self env0 venv,
     Venv_self = VClo [(src_to_val (to_src names env' p));Vev;Vlift;Vid] evl_body ->
-    ev s fuel [Vid;Venv_self;(src_to_val (to_src names env' p));Vev;Vlift;Vid] evl_body = (s', VCode e') ->
-    (s', e') = (anf s (map EStr env') p).
+    env0 = [venv;Venv_self;(src_to_val (to_src names env' p));Vev;Vlift;Vid] ->
+    (forall n x s, index n env' = Some x -> exists fuel v, ev s fuel env0 (EApp (EVar n_env) (EStr x)) = (s, v) /\ exists e, v = VCode e) ->
+    (forall n x s e, index n env' = Some x /\ exists fuel, ev s fuel env0 (EApp (EVar n_env) (EStr x)) = (s, VCode e) -> index n env2 = Some e) ->
+    ev s fuel env0 evl_body = (s', v') ->
+    (exists msg, v' = VError msg) \/ (exists e', v' = VCode e' /\ (s', e') = (anf s env2 p)).
 Proof.
   intros nMax. induction nMax; intros fuel Hfuel.
   inversion Hfuel. unfold n_ev in *. simpl in *.
-  intros p s names env' s' e' Venv_self HeqVenv_self H.
+  intros p s names env' env2 s' e' Venv_self env0 venv HeqVenv_self Heqenv0 Henv1 Henv2 H.
   destruct fuel.
-  simpl in H. inversion H.
+  simpl in H. inversion H. subst. left. repeat eexists.
   destruct p.
   - simpl in H.
-    case_eq (index n0 env').
-    intros s0 E. rewrite E in H.
     destruct fuel.
-    simpl in H. inversion H.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    simpl1 H p0 Heqp0.
+    simpl in Heqenv0.
+    case_eq (index n0 env').
+    intros s0 E. rewrite E in Heqenv0. simpl in Heqenv0.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite ev_var with (v:=VStr s0) in H.
+    remember (S fuel) as fuel1.
+    simpl in H.
+    rewrite Heqfuel1 in H.
     simpl1 H p0 Heqp0.
     destruct fuel.
-    simpl in H. inversion H.
-    simpl2 H p0 Heqp0.
-    simpl in H.
-    destruct fuel.
-    simpl in H. inversion H.
+    simpl in H. inversion H. subst. left. repeat eexists.
     rewrite ev_var with (v:=VStr s0) in H.
-    rewrite ev_var with (v:=Vid) in H.
-    unfold Vid at 1 in H.
+    remember (S fuel) as fuel1'.
+    simpl in H.
+    rewrite Heqfuel1' in H.
+    rewrite ev_var with (v:=venv) in H.
+    specialize (Henv1 n0 s0 s E).
+    destruct Henv1 as [fuel' [v' [Ha [e0 Hb]]]].
+    rewrite Hb in Ha.
+    destruct fuel'.
+    simpl in Ha. inversion Ha.
+    simpl in Ha.
+    destruct fuel'.
+    simpl in Ha. inversion Ha.
+    rewrite ev_var with (v:=venv) in Ha.
+    rewrite ev_str in Ha.
+    remember (S fuel') as fuel1''.
+    destruct venv; simpl in Ha; try congruence.
     rewrite ev_var with (v:=VStr s0) in H.
-    simpl in H. inversion H.
-    unfold n_exp. simpl. reflexivity.
-    unfold n_env. simpl. reflexivity.
-    unfold n_exp. simpl. reflexivity.
-    intros E. rewrite E in H.
-    simpl in H.
+    subst.
+    admit.
+    unfold n_exp. rewrite Heqenv0. simpl. reflexivity.
+    unfold n_env. rewrite Heqenv0. simpl. reflexivity.
+    unfold n_env. rewrite Heqenv0. simpl. reflexivity.
+    unfold n_exp. rewrite Heqenv0. simpl. reflexivity.
+    unfold n_exp. rewrite Heqenv0. simpl. reflexivity.
+    intros E. rewrite E in Heqenv0. simpl in Heqenv0.
     destruct fuel.
-    simpl in H. inversion H.
-    simpl in H.
-    destruct fuel.
-    simpl in H. inversion H.
+    simpl in H. inversion H. subst. left. repeat eexists.
     rewrite ev_var with (v:=VError "unbound var") in H.
-    destruct fuel.
-    simpl in H. inversion H.
-    inversion H.
-    unfold n_exp. simpl. reflexivity.
+    inversion H. subst. left. repeat eexists.
+    unfold n_exp. rewrite Heqenv0. simpl. reflexivity.
   - admit.
   - simpl in H.
     destruct names as [| f names].
     destruct fuel.
-    simpl in H. inversion H.
+    simpl in H. inversion H. subst. left. repeat eexists.
     simpl1 H p0 Heqp0.
     destruct fuel.
-    simpl in H. inversion H.
+    simpl in H. inversion H. subst. left. repeat eexists.
     rewrite ev_var with (v:=src_to_val (EError "name ran out")) in H.
-    simpl in H. inversion H.
-    unfold n_exp. simpl. reflexivity.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    unfold n_exp. rewrite Heqenv0. simpl. reflexivity.
     destruct names as [| x names].
     destruct fuel.
-    simpl in H. inversion H.
+    simpl in H. inversion H. subst. left. repeat eexists.
     simpl1 H p0 Heqp0.
     destruct fuel.
-    simpl in H. inversion H.
+    simpl in H. inversion H. subst. left. repeat eexists.
     rewrite ev_var with (v:=src_to_val (EError "name ran out")) in H.
-    simpl in H. inversion H.
-    unfold n_exp. simpl. reflexivity.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    unfold n_exp. rewrite Heqenv0. simpl. reflexivity.
     destruct fuel.
-    simpl in H. inversion H.
+    simpl in H. inversion H. subst. left. repeat eexists.
     simpl1 H p0 Heqp0.
     destruct fuel.
-    simpl in H. inversion H.
-    erewrite ev_var in H; try solve [unfold n_exp; simpl; reflexivity].
-    simpl1 H p0 Heqp0.
-    destruct fuel.
-    simpl in H. inversion H.
-    simpl in H.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    simpl in Heqenv0.
+    rewrite ev_var with (v:=VPair (VStr "lam") (VPair (VStr f) (VPair (VStr x) (VPair (src_to_val (to_src names (x :: f :: env') p)) (VStr "."))))) in H.
     Arguments string_dec: simpl never.
+    simpl in H.
     destruct fuel.
-    simpl in H. inversion H.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite ev_var with (v:=VPair (VStr "lam") (VPair (VStr f) (VPair (VStr x) (VPair (src_to_val (to_src names (x :: f :: env') p)) (VStr "."))))) in H.
+    simpl1 H p0 Heqp0.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
     rewrite ev_str with (t:="quote") in H.
-    remember ([Vid; Venv_self; VPair (VStr "lam") (VPair (VStr f) (VPair (VStr x) (VPair (src_to_val (to_src names (x :: f :: env') p)) (VStr ".")))); Vev;
-             Vlift; Vid]) as env0.
     assert (forall fuel, ev s (S (S fuel)) env0 (EOp1 OCar (EVar n_exp)) = (s, VStr "lam")) as Hcar. {
       intros. simpl. unfold ev. unfold n_exp. rewrite Heqenv0. simpl. reflexivity.
     }
     destruct fuel.
-    simpl in H. inversion H.
+    simpl in H. inversion H. subst. left. repeat eexists.
     rewrite (Hcar fuel) in H.
     remember (if string_dec "quote" "lam" then 1 else 0) as b.
     vm_compute in Heqb. rewrite Heqb in H.
@@ -1337,22 +1356,22 @@ Proof.
       auto.
     }
     destruct fuel.
-    simpl in H. inversion H.
-    rewrite Hno in H.
-    destruct fuel.
-    simpl in H. inversion H.
+    simpl in H. inversion H. subst. left. repeat eexists.
     rewrite Helse in H.
     destruct fuel.
-    simpl in H. inversion H.
+    simpl in H. inversion H. subst. left. repeat eexists.
     rewrite Helse in H.
     destruct fuel.
-    simpl in H. inversion H.
+    simpl in H. inversion H. subst. left. repeat eexists.
     rewrite Helse in H.
     destruct fuel.
-    simpl in H. inversion H.
+    simpl in H. inversion H. subst. left. repeat eexists.
     rewrite Helse in H.
     destruct fuel.
-    simpl in H. inversion H.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
     remember (S (S (S fuel))) as fuel3.
     simpl in H.
     rewrite Heqfuel3 in H.
@@ -1381,21 +1400,21 @@ Proof.
     remember (fresh s) as fs. destruct fs as [s1 v1].
     remember (fresh s1) as fs1. destruct fs1 as [s2 v2].
     destruct fuel.
-    simpl in H. inversion H.
+    simpl in H. inversion H. subst. left. repeat eexists.
     simpl2 H p0 Heqp0.
     destruct fuel.
-    simpl in H. inversion H.
+    simpl in H. inversion H. subst. left. repeat eexists.
     simpl3 H p0 Heqp0.
     destruct fuel.
-    simpl in H. inversion H.
+    simpl in H. inversion H. subst. left. repeat eexists.
     rewrite ev_var with (v:=Vev) in H.
     unfold Vev in H.
     destruct fuel.
-    simpl in H. inversion H.
+    simpl in H. inversion H. subst. left. repeat eexists.
     destruct fuel.
-    simpl in H. inversion H.
+    simpl in H. inversion H. subst. left. repeat eexists.
     destruct fuel.
-    simpl in H. inversion H.
+    simpl in H. inversion H. subst. left. repeat eexists.
     remember (ev (fst s2, []) (S (S (S (S fuel))))
                  (VCode v2 :: VCode v1 :: env0)
                  (EOp1 OCar (EOp1 OCdr (EOp1 OCdr (EOp1 OCdr (EVar n_exp)))))) as evb.
@@ -1403,7 +1422,7 @@ Proof.
     simpl in Heqevb.
     rewrite Heqevb in H.
     destruct fuel.
-    simpl in H. inversion H.
+    simpl in H. inversion H. subst. left. repeat eexists.
     rewrite ev_var with (v:=VPair (VStr "lam")
                            (VPair (VStr f)
                               (VPair (VStr x)
@@ -1413,7 +1432,7 @@ Proof.
                                     (VStr "."))))) in H.
     remember (src_to_val (to_src names (x :: f :: env') p)) as src_val_p.
     destruct (error_or_not src_val_p) as [[msg Herr] | Hnoterr].
-    rewrite Herr in H. inversion H.
+    rewrite Herr in H. inversion H. subst. left. repeat eexists.
     assert (forall {X} (a:string -> X) (b:X), match src_val_p with
              | VError msg => (a msg)
              | _ => b end = b) as A. {
@@ -1430,13 +1449,15 @@ Proof.
                    (EIf (EOp2 OEq (EVar 9) (EOp1 OCar (EOp1 OCdr (EOp1 OCdr (EVar n_exp))))) (EVar 7) (EApp (EVar n_env) (EVar 9))));
               VClo [src_val_p; VClo [Vid; Vid] (ELam evl_body); Vid; Vid] evl_body; src_val_p; VClo [Vid; Vid] (ELam evl_body); Vid; Vid] evl_body) as evi.
     destruct evi as [si' vi'].
-    (* eapply IHnMax in Heqevi. can't *)
+    (*eapply IHnMax in Heqevi.*)
     admit.
     unfold n_exp. simpl. reflexivity.
     unfold n_ev. rewrite Heqenv0. simpl. reflexivity.
     simpl. reflexivity.
     unfold n_l. rewrite Heqenv0. simpl. reflexivity.
     congruence. congruence. congruence. congruence. congruence.
+    unfold n_exp. rewrite Heqenv0. simpl. reflexivity.
+    unfold n_exp. rewrite Heqenv0. simpl. reflexivity.
   - admit.
   - admit.
   - admit.
