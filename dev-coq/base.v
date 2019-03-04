@@ -1310,12 +1310,200 @@ Proof.
   unfold n_env. simpl. reflexivity.
 Qed.
 
+Lemma index_unchanged_shrink: forall {X} prefix n (x:X) tail,
+    index n (prefix ++ tail) = Some x ->
+    n < length tail ->
+    index n tail = Some x.
+Proof.
+  intros X prefix. induction prefix; intros.
+  - simpl in H. apply H.
+  - simpl in H.
+    case_eq ((n0 =? Datatypes.length (prefix ++ tail))%nat).
+    intros E. apply beq_nat_true in E. rewrite app_length in E. omega.
+    intros E. eapply IHprefix. rewrite E in H. apply H. assumption.
+Qed.
+
+Lemma index_changed1: forall X (a: X) (prefix: list X) (tail: list X) i x,
+    i > length tail ->
+    index i (prefix ++ a :: tail) = Some x ->
+    index (i-1) (a :: (prefix ++ tail)%list) = Some x.
+Proof.
+  intros X a prefix. induction prefix; intros.
+  - apply index_lt in H0. simpl in H0. omega.
+  - simpl. rewrite app_length.
+    case_eq ((i - 1 =? S (Datatypes.length prefix + Datatypes.length tail))%nat).
+    intros. apply beq_nat_true in H1. apply index_lt in H0. rewrite app_length in H0. simpl in H0. omega.
+    intros.
+    case_eq ((i - 1 =? Datatypes.length prefix + Datatypes.length tail)%nat).
+    intros. simpl in H0. rewrite app_length in H0. simpl in H0. rewrite <- plus_n_Sm in H0.
+    case_eq ((i =? S (Datatypes.length prefix + Datatypes.length tail))%nat).
+    intros. rewrite H3 in H0. apply H0.
+    intros. apply beq_nat_true in H2. apply beq_nat_false in H3. omega.
+    intros. simpl in H0. rewrite app_length in H0. simpl in H0. rewrite <- plus_n_Sm in H0.
+    case_eq ((i =? S (Datatypes.length prefix + Datatypes.length tail))%nat).
+    intros. apply beq_nat_false in H2. apply beq_nat_true in H3. omega.
+    intros. rewrite H3 in H0.
+    eapply index_unchanged_shrink. instantiate (1:=[a]).
+    eapply IHprefix.
+    omega. eapply H0. eapply index_lt in H0. rewrite app_length in H0. simpl in H0.
+    rewrite app_length. omega.
+Qed.
+
 Lemma distinct_swap1: forall X (a: X) (prefix: list X) (tail: list X),
   (forall i j xi xj, (index i ((a :: prefix ++ tail)%list) = Some xi /\ index j ((a :: prefix ++ tail)%list) = Some xj /\ i <> j) -> xi <> xj) ->
   (forall i j xi xj, (index i (prefix ++ a :: tail) = Some xi /\ index j (prefix ++ a :: tail) = Some xj /\ i <> j) -> xi <> xj).
 Proof.
-    admit.
-Admitted.
+  intros.
+  destruct H0 as [H0i [H0j Neq]].
+  assert (i < length (prefix ++ a :: tail)) as Li. {
+    eapply index_lt. eapply H0i.
+  }
+  assert (j < length (prefix ++ a :: tail)) as Lj. {
+    eapply index_lt. eapply H0j.
+  }
+  rewrite app_length in *. simpl in Li. simpl in Lj.
+  assert (i < length tail \/ i = length tail \/ i > length tail) as Oi. {
+    omega.
+  }
+  assert (j < length tail \/ j = length tail \/ j > length tail) as Oj. {
+    omega.
+  }
+  destruct Oi as [Oil | [Oieq | Oir]];
+  destruct Oj as [Ojl | [Ojeq | Ojr]].
+  eapply H.
+  assert ((a :: (prefix ++ tail)%list) = ((a :: prefix) ++ tail)%list) as Eq. {
+    simpl. reflexivity.
+  }
+  rewrite Eq.
+  assert (((prefix ++ a :: tail)%list) = (((prefix ++ [a]) ++ tail)%list)) as Eq'. {
+    simpl. rewrite <- app_assoc. simpl. reflexivity.
+  }
+  rewrite Eq' in H0i. eapply index_unchanged_shrink in H0i.
+  rewrite Eq' in H0j. eapply index_unchanged_shrink in H0j.
+  split.
+  eapply index_unchanged. eapply H0i.
+  split.
+  eapply index_unchanged. eapply H0j.
+  assumption. assumption. assumption.
+
+  apply index_unchanged_shrink in H0j. simpl in H0j.
+  case_eq ((j =? Datatypes.length tail)%nat).
+  intros E. rewrite E in H0j. inversion H0j.
+  rewrite <- H1.
+  eapply H.
+  split.
+  assert ((a :: (prefix ++ tail)%list) = ((a :: prefix) ++ tail)%list) as Eq. {
+    simpl. reflexivity.
+  }
+  rewrite Eq.
+  assert (((prefix ++ a :: tail)%list) = (((prefix ++ [a]) ++ tail)%list)) as Eq'. {
+    simpl. rewrite <- app_assoc. simpl. reflexivity.
+  }
+  rewrite Eq' in H0i. eapply index_unchanged_shrink in H0i.
+  eapply index_unchanged. eapply H0i. assumption.
+  split.
+  simpl. instantiate (1:=length (prefix ++ tail)).
+  case_eq ((Datatypes.length (prefix ++ tail) =? Datatypes.length (prefix ++ tail))%nat).
+  intros. reflexivity.
+  intros. apply beq_nat_false in H0. omega.
+  rewrite app_length. omega.
+  intros. apply beq_nat_false in H0. omega.
+  simpl. omega.
+  eapply index_changed1 in H0j.
+  eapply H.
+  split.
+  assert ((a :: (prefix ++ tail)%list) = ((a :: prefix) ++ tail)%list) as Eq. {
+    simpl. reflexivity.
+  }
+  rewrite Eq.
+  assert (((prefix ++ a :: tail)%list) = (((prefix ++ [a]) ++ tail)%list)) as Eq'. {
+    simpl. rewrite <- app_assoc. simpl. reflexivity.
+  }
+  rewrite Eq' in H0i. eapply index_unchanged_shrink in H0i.
+  eapply index_unchanged. eapply H0i. assumption.
+  split.
+  eapply H0j. omega. omega.
+
+  apply index_unchanged_shrink in H0i. simpl in H0i.
+  case_eq ((i =? Datatypes.length tail)%nat).
+  intros E. rewrite E in H0i. inversion H0i.
+  rewrite <- H1.
+  eapply H.
+  split.
+  simpl. instantiate (1:=length (prefix ++ tail)).
+  case_eq ((Datatypes.length (prefix ++ tail) =? Datatypes.length (prefix ++ tail))%nat).
+  intros. reflexivity.
+  intros. apply beq_nat_false in H0. omega.
+  split.
+  assert ((a :: (prefix ++ tail)%list) = ((a :: prefix) ++ tail)%list) as Eq. {
+    simpl. reflexivity.
+  }
+  rewrite Eq.
+  assert (((prefix ++ a :: tail)%list) = (((prefix ++ [a]) ++ tail)%list)) as Eq'. {
+    simpl. rewrite <- app_assoc. simpl. reflexivity.
+  }
+  rewrite Eq' in H0j. eapply index_unchanged_shrink in H0j.
+  eapply index_unchanged. eapply H0j. assumption.
+  rewrite app_length. omega.
+  intros. apply beq_nat_false in H0. omega.
+  simpl. omega.
+
+  omega.
+
+  apply index_unchanged_shrink in H0i. simpl in H0i.
+  case_eq ((i =? Datatypes.length tail)%nat).
+  intros E. rewrite E in H0i. inversion H0i.
+  rewrite <- H1.
+  eapply H.
+  split.
+  simpl. instantiate (1:=length (prefix ++ tail)).
+  case_eq ((Datatypes.length (prefix ++ tail) =? Datatypes.length (prefix ++ tail))%nat).
+  intros. reflexivity.
+  intros. apply beq_nat_false in H0. omega.
+  split.
+  eapply index_changed1 in H0j. eapply H0j.
+  omega. rewrite app_length. omega.
+  intros. apply beq_nat_false in H0. omega.
+  simpl. omega.
+
+  eapply H.
+  split.
+  eapply index_changed1 in H0i. eapply H0i. omega.
+  split.
+  assert ((a :: (prefix ++ tail)%list) = ((a :: prefix) ++ tail)%list) as Eq. {
+    simpl. reflexivity.
+  }
+  rewrite Eq.
+  assert (((prefix ++ a :: tail)%list) = (((prefix ++ [a]) ++ tail)%list)) as Eq'. {
+    simpl. rewrite <- app_assoc. simpl. reflexivity.
+  }
+  rewrite Eq' in H0j. eapply index_unchanged_shrink in H0j.
+  eapply index_unchanged. eapply H0j. assumption.
+  omega.
+
+  apply index_unchanged_shrink in H0j. simpl in H0j.
+  case_eq ((j =? Datatypes.length tail)%nat).
+  intros E. rewrite E in H0j. inversion H0j.
+  rewrite <- H1.
+  eapply H.
+  split.
+  eapply index_changed1 in H0i. eapply H0i. omega.
+  split.
+  simpl. instantiate (1:=length (prefix ++ tail)).
+  case_eq ((Datatypes.length (prefix ++ tail) =? Datatypes.length (prefix ++ tail))%nat).
+  intros. reflexivity.
+  intros. apply beq_nat_false in H0. omega.
+  rewrite app_length. omega.
+  intros. apply beq_nat_false in H0. omega.
+  simpl. omega.
+
+  eapply H.
+  split.
+  eapply index_changed1 in H0i. eapply H0i. omega.
+  split.
+  eapply index_changed1 in H0j. eapply H0j. omega.
+  omega.
+Qed.
 
 Theorem opt_compilation: forall n, forall fuel, fuel < n -> forall p s names env' env2 s' v' Venv_self env0 venv,
     Venv_self = VClo [(src_to_val (to_src names env' p));Vevl;Vlift;Vid] evl_body ->
