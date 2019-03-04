@@ -1840,7 +1840,28 @@ Proof.
       intros. contradiction.
       intros. rewrite H0 in Hi. rewrite L in H0. rewrite H0.
       specialize (Henv2 n0 x0 s0 e).
-      admit.
+      assert (exists fuel : nat,
+                 ev s0 fuel env0 (EApp (EVar n_env) (EStr x0)) = (s0, VCode e)) as Hex. {
+        exists (S (S fuel')).
+        remember (S fuel') as Sfuel'.
+        simpl. rewrite HeqSfuel'.
+        rewrite ev_var with (v:=venv).
+        rewrite ev_str.
+        destruct fuel'.
+        simpl in Hev. inversion Hev.
+        simpl in Hev.
+        destruct fuel'.
+        simpl in Hev. inversion Hev.
+        rewrite ev_var with (v:=venv) in Hev.
+        destruct venv; try solve [simpl in Hev; inversion Hev].
+        rewrite ev_str in Hev.
+        eapply ev_fuel_monotonic. instantiate (1:=(S fuel')). omega. eapply Hev.
+        congruence.
+        unfold n_env. simpl. admit.
+        unfold n_env. rewrite Heqenv0. simpl. reflexivity.
+      }
+      apply Henv2.
+      split. apply Hi. apply Hex.
     }
     specialize (IHnMax F).
     rewrite Heqsrc_val_p in *.
