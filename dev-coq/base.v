@@ -1786,7 +1786,26 @@ Proof.
         split. apply I1. split. apply I2. omega.
       }
       specialize (Hd I3). contradiction.
-      admit.
+      intros. rewrite H0 in Hev.
+      simpl3 Hev p0 Heqp0.
+      destruct fuel'.
+      simpl in Hev. inversion Hev.
+      Ltac simpl4 H p0 Heqp0 :=
+  match goal with
+  | [ H : (let (s, v) := let (s2, v2) := let (s3,v3) := let (s4,v4) := ?e in ?body1 in ?body2 in ?body3 in ?body4) = ?r |- _ ] =>
+    remember (e) as p0;
+    simpl in Heqp0;
+    rewrite Heqp0 in H;
+    clear Heqp0; clear p0
+  end.
+      simpl4 Hev p0 Heqp0.
+      destruct fuel'.
+      simpl in Hev. inversion Hev.
+      erewrite ev_var in Hev; try solve [unfold n_exp; simpl; reflexivity].
+      simpl4 Hev p0 Heqp0.
+      case_eq (string_dec x0 x0).
+      intros. rewrite H1 in Hev. inversion Hev. subst. reflexivity.
+      intros. contradiction.
       simpl. reflexivity.
       admit.
     }
