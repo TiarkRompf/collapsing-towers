@@ -1255,6 +1255,8 @@ Definition Vevl := VClo [Vlift;Vid] (ELam evl_body).
 Theorem opt_compilation: forall n, forall fuel, fuel < n -> forall p s names env' env2 s' v' Venv_self env0 venv,
     Venv_self = VClo [(src_to_val (to_src names env' p));Vevl;Vlift;Vid] evl_body ->
     env0 = [venv;Venv_self;(src_to_val (to_src names env' p));Vevl;Vlift;Vid] ->
+    length env' = length env2 ->
+    (forall i j xi xj, (index i (names ++ env') = Some xi /\ index j (names ++ env') = Some xj /\ i <> j) -> xi <> xj) ->
     (forall n x s, index n env' = Some x -> exists fuel v, ev s fuel env0 (EApp (EVar n_env) (EStr x)) = (s, v) /\ exists e, v = VCode e) ->
     (forall n x s e, (index n env' = Some x /\ exists fuel, ev s fuel env0 (EApp (EVar n_env) (EStr x)) = (s, VCode e)) -> index n env2 = Some e) ->
     ev s fuel env0 evl_body = (s', v') ->
@@ -1262,7 +1264,7 @@ Theorem opt_compilation: forall n, forall fuel, fuel < n -> forall p s names env
 Proof.
   intros nMax. induction nMax; intros fuel Hfuel.
   inversion Hfuel. unfold n_ev in *. simpl in *.
-  intros p s names env' env2 s' e' Venv_self env0 venv HeqVenv_self Heqenv0 Henv1 Henv2 H.
+  intros p s names env' env2 s' e' Venv_self env0 venv HeqVenv_self Heqenv0 L Hdistinct Henv1 Henv2 H.
   destruct fuel.
   simpl in H. inversion H. subst. left. repeat eexists.
   destruct p.
@@ -1708,6 +1710,15 @@ Proof.
       eapply Hex.
       simpl. rewrite Heqenv0. simpl. reflexivity.
     }
+    assert (Datatypes.length (x :: f :: env') = Datatypes.length (v2 :: v1 :: env2)) as L1. {
+      simpl. rewrite L. reflexivity.
+    }
+    specialize (IHnMax L1).
+    assert ((forall (i j : nat) (xi xj : string),
+                index i (names ++ x :: f :: env') = Some xi /\ index j (names ++ x :: f :: env') = Some xj /\ i <> j -> xi <> xj)) as Hd. {
+      admit.
+    }
+    specialize (IHnMax Hd).
     specialize (IHnMax E).
 
     assert ((forall (n : nat) (x0 : string) (s : state) (e : exp),
@@ -1723,7 +1734,6 @@ Proof.
       destruct H0 as [Hi [fuel' Hev]].
       simpl in Hi.
       simpl.
-      assert (Datatypes.length env' = Datatypes.length env2) as L by admit.
       case_eq ((n0 =? S (Datatypes.length env'))%nat); intros E0.
       rewrite E0 in Hi. inversion Hi. subst. rewrite <- L. rewrite E0.
       destruct fuel'.
@@ -1747,6 +1757,8 @@ Proof.
       erewrite ev_var in Hev; try solve [unfold n_exp; simpl; reflexivity].
       simpl3 Hev p0 Heqp0.
       case_eq (string_dec x0 f). intros. subst. rewrite H0 in Hev.
+      (specialize (Hd (length env') (S (length env')) f f)).
+      simpl in Hd.
       (* something weird *)
       admit.
       admit.
