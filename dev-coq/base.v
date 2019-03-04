@@ -1252,6 +1252,20 @@ Definition Vevl := VClo [Vlift;Vid] (ELam evl_body).
           clear Heqp0; clear p0
         end.
 
+Lemma index_length: forall {X} prefix (x:X) tail,
+  index (length tail) (prefix ++ [x] ++ tail) = Some x.
+Proof.
+  intros X prefix. induction prefix.
+  intros. simpl.
+  - case_eq ((length tail =? length tail)%nat).
+    intros E. reflexivity.
+    intros E. apply beq_nat_false in E. omega.
+  - intros. simpl. rewrite app_length. simpl.
+    case_eq ((Datatypes.length tail =? Datatypes.length prefix + S (Datatypes.length tail))%nat).
+    intros E. apply beq_nat_true in E. omega.
+    intros E. apply IHprefix.
+Qed.
+
 Theorem opt_compilation: forall n, forall fuel, fuel < n -> forall p s names env' env2 s' v' Venv_self env0 venv,
     Venv_self = VClo [(src_to_val (to_src names env' p));Vevl;Vlift;Vid] evl_body ->
     env0 = [venv;Venv_self;(src_to_val (to_src names env' p));Vevl;Vlift;Vid] ->
@@ -1759,8 +1773,19 @@ Proof.
       case_eq (string_dec x0 f). intros. subst. rewrite H0 in Hev.
       (specialize (Hd (length env') (S (length env')) f f)).
       simpl in Hd.
-      (* something weird *)
-      admit.
+      assert (index (length env') ((names ++ [f]) ++ [f] ++ env') = Some f) as I1. {
+        apply index_length.
+      }
+      simpl in I1. rewrite <- app_assoc in I1. simpl in I1.
+      assert (index (length (f :: env')) (names ++ [f] ++ (f :: env')) = Some f) as I2. {
+        apply index_length.
+      }
+      simpl in I2.
+      assert (index (Datatypes.length env') (names ++ f :: f :: env') = Some f /\
+              index (S (Datatypes.length env')) (names ++ f :: f :: env') = Some f /\ Datatypes.length env' <> S (Datatypes.length env')) as I3. {
+        split. apply I1. split. apply I2. omega.
+      }
+      specialize (Hd I3). contradiction.
       admit.
       simpl. reflexivity.
       admit.
