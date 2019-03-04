@@ -2479,6 +2479,20 @@ Proof.
   - admit.
 Admitted.
 
+Theorem opt_compilation0: forall fuel p s names s' v' env0 Venv_self,
+    Venv_self = VClo [(src_to_val (to_src names [] p));Vevl;Vlift;Vid] evl_body ->
+    env0 = [Venv;Venv_self;(src_to_val (to_src names [] p));Vevl;Vlift;Vid] ->
+    (forall (i j : nat) (xi xj : string), index i names = Some xi /\ index j names = Some xj /\ i <> j -> xi <> xj) ->
+    ev s fuel env0 evl_body = (s', v') ->
+    (exists msg, v' = VError msg) \/ (exists e', v' = VCode e' /\ (s', e') = (anf s [] p)).
+Proof.
+  intros. apply opt_compilation with (fuel:=fuel) (n:=S fuel) (names:=names) (env':=[]) (Venv_self:=Venv_self) (env0:=env0) (venv:=Venv).
+  omega. assumption. assumption. simpl. reflexivity. rewrite app_nil_r. assumption.
+  simpl. intros. inversion H3.
+  simpl. intros. destruct H3 as [H3 ?]. inversion H3.
+  assumption.
+Qed.
+
 Lemma correctness_of_interpretation_inner: forall n, forall fuel, fuel < n -> forall p s names env' r Venv_self,
      Venv_self = VClo [(src_to_val (to_src names env' p));Vev;Vid;Vid] evl_body ->
      ev s fuel [Vid;Venv_self;(src_to_val (to_src names env' p));Vev;Vid;Vid] evl_body = r ->
