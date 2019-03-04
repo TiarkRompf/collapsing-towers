@@ -1288,7 +1288,7 @@ Proof.
     case_eq ((n0 =? Datatypes.length (prefix ++ tail))%nat).
     intros E. apply beq_nat_true in E. rewrite app_length in E. apply index_lt in H. omega.
     intros E. eapply IHprefix. apply H.
-Qed.  
+Qed.
 
 Theorem opt_compilation: forall n, forall fuel, fuel < n -> forall p s names env' env2 s' v' Venv_self env0 venv,
     Venv_self = VClo [(src_to_val (to_src names env' p));Vevl;Vlift;Vid] evl_body ->
