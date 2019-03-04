@@ -1931,7 +1931,21 @@ Proof.
         rewrite ev_var with (v:=(VPair (VStr "lam") (VPair (VStr f) (VPair (VStr x) (VPair src_val_p (VStr ".")))))) in Hev.
         case_eq (string_dec x0 x).
         intros.
-        assert (x <> x0) as Contra by admit.
+        assert (x <> x0) as Contra. {
+          eapply Hdistinct.
+          split.
+          simpl. instantiate (1:=(Datatypes.length (names ++ env'))%nat).
+          case_eq ((Datatypes.length (names ++ env') =? S (Datatypes.length (names ++ env')))%nat).
+          intros. apply beq_nat_true in H3. omega.
+          intros.
+          case_eq ((Datatypes.length (names ++ env') =? (Datatypes.length (names ++ env')))%nat).
+          intros. reflexivity.
+          intros. apply beq_nat_false in H4. omega.
+          instantiate (1:=n0).
+          split.
+          apply index_unchanged. assumption.
+          apply index_lt in Hi. rewrite app_length. omega.
+        }
         subst. contradiction.
         intros. rewrite H2 in Hev.
         rewrite ev_var with (v:=venv) in Hev.
