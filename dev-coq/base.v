@@ -1807,6 +1807,39 @@ Proof.
       intros. rewrite H1 in Hev. inversion Hev. subst. reflexivity.
       intros. contradiction.
       simpl. reflexivity.
+      rewrite E0 in Hi.
+      rewrite L in E0. rewrite E0.
+      case_eq ((n0 =? Datatypes.length env')%nat).
+      intros. rewrite H0 in Hi. inversion Hi. subst.
+      rewrite L in H0. rewrite H0.
+      destruct fuel'.
+      simpl in Hev. inversion Hev.
+      simpl in Hev.
+      destruct fuel'.
+      simpl in Hev. inversion Hev.
+      erewrite ev_var in Hev; try solve [unfold n_exp; simpl; reflexivity].
+      simpl in Hev.
+      destruct fuel'.
+      simpl in Hev. inversion Hev.
+      simpl1 Hev p0 Heqp0.
+      destruct fuel'.
+      simpl in Hev. inversion Hev.
+      simpl2 Hev p0 Heqp0.
+      simpl2 Hev p0 Heqp0.
+      destruct fuel'.
+      simpl in Hev. inversion Hev.
+      simpl3 Hev p0 Heqp0.
+      destruct fuel'.
+      simpl in Hev. inversion Hev.
+      erewrite ev_var in Hev; try solve [simpl; reflexivity].
+      simpl3 Hev p0 Heqp0.
+      case_eq (string_dec x0 x0).
+      intros. rewrite H1 in Hev.
+      erewrite ev_var in Hev; try solve [simpl; reflexivity].
+      inversion Hev. subst. reflexivity.
+      intros. contradiction.
+      intros. rewrite H0 in Hi. rewrite L in H0. rewrite H0.
+      specialize (Henv2 n0 x0 s0 e).
       admit.
     }
     specialize (IHnMax F).
