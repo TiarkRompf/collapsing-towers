@@ -1310,6 +1310,13 @@ Proof.
   unfold n_env. simpl. reflexivity.
 Qed.
 
+Lemma distinct_swap1: forall X (a: X) (prefix: list X) (tail: list X),
+  (forall i j xi xj, (index i ((a :: prefix ++ tail)%list) = Some xi /\ index j ((a :: prefix ++ tail)%list) = Some xj /\ i <> j) -> xi <> xj) ->
+  (forall i j xi xj, (index i (prefix ++ a :: tail) = Some xi /\ index j (prefix ++ a :: tail) = Some xj /\ i <> j) -> xi <> xj).
+Proof.
+    admit.
+Admitted.
+
 Theorem opt_compilation: forall n, forall fuel, fuel < n -> forall p s names env' env2 s' v' Venv_self env0 venv,
     Venv_self = VClo [(src_to_val (to_src names env' p));Vevl;Vlift;Vid] evl_body ->
     env0 = [venv;Venv_self;(src_to_val (to_src names env' p));Vevl;Vlift;Vid] ->
@@ -2003,7 +2010,12 @@ Proof.
     specialize (IHnMax L1).
     assert ((forall (i j : nat) (xi xj : string),
                 index i (names ++ x :: f :: env') = Some xi /\ index j (names ++ x :: f :: env') = Some xj /\ i <> j -> xi <> xj)) as Hd. {
-      admit.
+      apply distinct_swap1.
+      assert (((x :: (names ++ f :: env')%list)) = (((x :: names) ++ f :: env')%list)) as Eq2. {
+        simpl. reflexivity.
+      }
+      rewrite Eq2. apply distinct_swap1.
+      eapply Hdistinct.
     }
     specialize (IHnMax Hd).
     specialize (IHnMax E).
