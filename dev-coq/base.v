@@ -1481,7 +1481,62 @@ Proof.
     remember (S (S fuel)) as fuel2'.
     simpl in H.
     rewrite Heqfuel2' in H.
+    remember (ev s (S (S fuel)) env0 (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar n_env))) as ev1.
+    symmetry in Heqev1.
+    remember (S fuel) as Sfuel1.
+    simpl in Heqev1. rewrite HeqSfuel1 in *.
+    simpl1 Heqev1 p0 Heqp0.
+    destruct fuel.
+    rewrite <- Heqev1 in H. simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite ev_var with (v:=Vevl) in Heqev1. unfold Vevl at 1 in Heqev1.
+    simpl2 Heqev1 p0 Heqp0.
+    destruct fuel.
+    rewrite <- Heqev1 in H. simpl in H. inversion H. subst. left. repeat eexists.
+    simpl3 Heqev1 p0 Heqp0.
+    destruct fuel.
+    rewrite <- Heqev1 in H. simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite ev_var with (v:=VPair (VStr "app") (VPair (src_to_val (to_src names env' p1)) (VPair (src_to_val (to_src names env' p2)) (VStr ".")))) in Heqev1.
+    remember (src_to_val (to_src names env' p1)) as src_val_p1.
+    destruct (error_or_not src_val_p1) as [[msg Herr] | Hnoterr].
+    rewrite Herr in Heqev1. rewrite <- Heqev1 in H. inversion H. subst. left. repeat eexists.
+    assert (forall {X} (a:string -> X) (b:X), match src_val_p1 with
+             | VError msg => (a msg)
+             | _ => b end = b) as A. {
+      destruct src_val_p1; simpl; congruence.
+    }
+    rewrite A in Heqev1.
+    remember (S (S fuel)) as Sfuel2.
+    simpl1 Heqev1 p0 Heqp0.
+    rewrite ev_var with (v:=venv) in Heqev1.
+    destruct (error_or_not venv) as [[msg' Herr'] | Hnoterr'].
+    rewrite Herr' in Heqev1. rewrite <- Heqev1 in H. inversion H. subst. left. repeat eexists.
+    assert (match venv with
+           | VError msg => (s, VError msg)
+           | _ =>
+               ev s (S (S Sfuel2))
+                 [venv; VClo [src_val_p1; VClo [Vlift; Vid] (ELam evl_body); Vlift; Vid] evl_body; src_val_p1; VClo [Vlift; Vid] (ELam evl_body); Vlift;
+                 Vid] evl_body
+           end = ev s (S (S Sfuel2))
+                 [venv; VClo [src_val_p1; VClo [Vlift; Vid] (ELam evl_body); Vlift; Vid] evl_body; src_val_p1; VClo [Vlift; Vid] (ELam evl_body); Vlift;
+                  Vid] evl_body) as B. {
+      remember (S (S (Sfuel2))) as fuel'.
+      destruct venv; simpl; congruence.
+    }
+    rewrite B in Heqev1.
+    destruct ev1 as [s1 v1].
+    eapply IHnMax in Heqev1.
+    destruct Heqev1 as [[? Herr1] | [? [Heq1 Hanf1]]].
+    subst. simpl in H. inversion H. subst. left. repeat eexists.
+    instantiate (1:=p1) in Hanf1. instantiate (1:=env2) in Hanf1.
+    subst.
     admit.
+    omega.
+    instantiate (1:=env'). instantiate (1:=names). reflexivity.
+    subst. simpl. reflexivity. rewrite L. reflexivity. eapply Hdistinct.
+    admit. admit.
+    unfold n_env. rewrite Heqenv0. simpl. reflexivity.
+    unfold n_exp. rewrite Heqenv0. simpl. reflexivity.
+    unfold n_ev. rewrite Heqenv0. simpl. reflexivity.
     congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence.
     unfold n_exp. rewrite Heqenv0. simpl. reflexivity.
     unfold n_exp. rewrite Heqenv0. simpl. reflexivity.
