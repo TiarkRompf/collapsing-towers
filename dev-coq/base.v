@@ -825,6 +825,14 @@ Ltac simpl3 H p0 Heqp0 :=
     rewrite Heqp0 in H;
     clear Heqp0; clear p0
   end.
+Ltac simpl4 H p0 Heqp0 :=
+  match goal with
+  | [ H : (let (s, v) := let (s2, v2) := let (s3,v3) := let (s4,v4) := ?e in ?body1 in ?body2 in ?body3 in ?body4) = ?r |- _ ] =>
+    remember (e) as p0;
+    simpl in Heqp0;
+    rewrite Heqp0 in H;
+    clear Heqp0; clear p0
+  end.
 
 Lemma exp_apart_car: forall venv nocare s fuel a d,
     ev s (S (S fuel)) [venv; nocare; VPair a d; Vev; Vid; Vid] (EOp1 OCar (EVar n_exp)) = (s, a).
@@ -1234,23 +1242,41 @@ Definition Vlift := VClo [] (ELift (EVar 1)).
 Definition Vevl := VClo [Vlift;Vid] (ELam evl_body).
 
 
-      Ltac simpl1g p0 Heqp0 :=
-        match goal with
-        | [ |- (let (s, v) := ?e in ?body1) = ?r ] =>
-          remember (e) as p0;
-          simpl in Heqp0;
-          rewrite Heqp0;
-          clear Heqp0; clear p0
-        end.
+Ltac simpl1g p0 Heqp0 :=
+  match goal with
+  | [ |- (let (s, v) := ?e in ?body1) = ?r ] =>
+    remember (e) as p0;
+    simpl in Heqp0;
+    rewrite Heqp0;
+    clear Heqp0; clear p0
+  end.
 
-      Ltac simpl2g p0 Heqp0 :=
-        match goal with
-        | [ |- (let (s, v) := let (s, v) := ?e in ?body1 in ?body2) = ?r ] =>
-          remember (e) as p0;
-          simpl in Heqp0;
-          rewrite Heqp0;
-          clear Heqp0; clear p0
-        end.
+Ltac simpl2g p0 Heqp0 :=
+  match goal with
+  | [ |- (let (s1, v1) := let (s2, v2) := ?e in ?body1 in ?body2) = ?r ] =>
+    remember (e) as p0;
+    simpl in Heqp0;
+    rewrite Heqp0;
+    clear Heqp0; clear p0
+  end.
+
+Ltac simpl3g p0 Heqp0 :=
+  match goal with
+  | [ |- (let (s, v) := let (s2, v2) := let (s3,v3) := ?e in ?body1 in ?body2 in ?body3) = ?r ] =>
+    remember (e) as p0;
+    simpl in Heqp0;
+    rewrite Heqp0;
+    clear Heqp0; clear p0
+  end.
+
+Ltac simpl4g p0 Heqp0 :=
+  match goal with
+  | [ |- (let (s1, v1) := let (s2, v2) := let (s3, v3) := let (s4, v4) :=?e in ?body1 in ?body2 in ?body3 in ?body4) = ?r ] =>
+    remember (e) as p0;
+    simpl in Heqp0;
+    rewrite Heqp0;
+    clear Heqp0; clear p0
+  end.
 
 Lemma index_length: forall {X} prefix (x:X) tail,
   index (length tail) (prefix ++ [x] ++ tail) = Some x.
@@ -2196,14 +2222,6 @@ Proof.
       split.
       simpl2g p0 Heqp0.
       rewrite Heqenv0.
-      Ltac simpl4g p0 Heqp0 :=
-        match goal with
-        | [ |- (let (s, v) := let (s, v) := let (s, v) := let (s, v) :=?e in ?body1 in ?body2 in ?body3 in ?body4) = ?r ] =>
-          remember (e) as p0;
-          simpl in Heqp0;
-          rewrite Heqp0;
-          clear Heqp0; clear p0
-        end.
       simpl4g p0 Heqp0.
       subst. rewrite H2.
       simpl1g p0 Heqp0.
@@ -2300,14 +2318,6 @@ Proof.
       simpl3 Hev p0 Heqp0.
       destruct fuel'.
       simpl in Hev. inversion Hev.
-      Ltac simpl4 H p0 Heqp0 :=
-  match goal with
-  | [ H : (let (s, v) := let (s2, v2) := let (s3,v3) := let (s4,v4) := ?e in ?body1 in ?body2 in ?body3 in ?body4) = ?r |- _ ] =>
-    remember (e) as p0;
-    simpl in Heqp0;
-    rewrite Heqp0 in H;
-    clear Heqp0; clear p0
-  end.
       simpl4 Hev p0 Heqp0.
       destruct fuel'.
       simpl in Hev. inversion Hev.
@@ -2703,38 +2713,13 @@ Proof.
                ev s (S (S (S (S (S fuel0))))) env0 (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar n_env)) =
                ev s (S (S (S (S fuel0)))) [Vid; VClo [p1_src_val; VClo [VClo [] (EVar 1); VClo [] (EVar 1)] (ELam evl_body); VClo [] (EVar 1); VClo [] (EVar 1)] evl_body; p1_src_val; Vev; Vid; Vid] evl_body) as HI. {
 
-      Ltac simplh1 p0 Heqp0 :=
-        match goal with
-        | [ |- (let (s, v) := ev ?s1 (S ?fuel1) ?env1 ?e1 in ?body1) = ?r ] =>
-          remember (ev s1 (S fuel1) env1 e1) as p0;
-          simpl in Heqp0;
-          rewrite Heqp0;
-          clear Heqp0; clear p0
-        end.
-      Ltac simplh2 p0 Heqp0 :=
-        match goal with
-        | [ |- (let (s, v) := let (s2, v2) := ev ?s1 (S ?fuel1) ?env1 ?e1 in ?body1 in ?body2) = ?r ] =>
-          remember (ev s1 (S fuel1) env1 e1) as p0;
-          simpl in Heqp0;
-          rewrite Heqp0;
-          clear Heqp0; clear p0
-        end.
-      Ltac simplh3 p0 Heqp0 :=
-        match goal with
-        | [ |- (let (s, v) := let (s2, v2) := let (s3,v3) := ev ?s1 (S ?fuel1) ?env1 ?e1 in ?body1 in ?body2 in ?body3) = ?r ] =>
-          remember (ev s1 (S fuel1) env1 e1) as p0;
-          simpl in Heqp0;
-          rewrite Heqp0;
-          clear Heqp0; clear p0
-        end.
-
       intros.
       remember (S (S (S (S fuel0)))) as fuel0'.
       simpl.
       rewrite Heqfuel0' in *. clear Heqfuel0'. clear fuel0'.
 
       remember (S (S (S fuel0))) as fuel0'.
-      simplh1 p0 Heqp0.
+      simpl1g p0 Heqp0.
       rewrite Heqfuel0' in *. clear Heqfuel0'. clear fuel0'.
 
       rewrite ev_var with (v:=Vev). unfold Vev.
@@ -2753,7 +2738,7 @@ Proof.
       rewrite B.
 
       remember (S (S fuel0)) as fuel0'.
-      simplh1 p0 Heqp0.
+      simpl1g p0 Heqp0.
       rewrite Heqfuel0' in *. clear Heqfuel0'. clear fuel0'.
 
       rewrite ev_var with (v:=Vid). unfold Vid.
