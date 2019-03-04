@@ -1852,12 +1852,73 @@ Proof.
         simpl in Hev.
         destruct fuel'.
         simpl in Hev. inversion Hev.
-        rewrite ev_var with (v:=venv) in Hev.
-        destruct venv; try solve [simpl in Hev; inversion Hev].
+        rewrite ev_var with (v:=(VClo (VCode v2 :: VCode v1 :: env0)
+                (EIf
+                   (EOp2 OEq (EVar 9) (EOp1 OCar (EOp1 OCdr (EVar n_exp))))
+                   (EVar 6)
+                   (EIf
+                      (EOp2 OEq (EVar 9)
+                         (EOp1 OCar (EOp1 OCdr (EOp1 OCdr (EVar n_exp)))))
+                      (EVar 7) (EApp (EVar n_env) (EVar 9)))))) in Hev.
         rewrite ev_str in Hev.
-        eapply ev_fuel_monotonic. instantiate (1:=(S fuel')). omega. eapply Hev.
+        simpl in Hev.
+        destruct fuel'.
+        simpl in Hev. inversion Hev.
+        simpl1 Hev p0 Heqp0.
+        destruct fuel'.
+        simpl in Hev. inversion Hev.
+        erewrite ev_var with (v:=VStr x0) in Hev.
+        simpl2 Hev p0 Heqp0.
+        destruct fuel'.
+        simpl in Hev. inversion Hev.
+        simpl3 Hev p0 Heqp0.
+        destruct fuel'.
+        simpl in Hev. inversion Hev.
+        unfold n_exp in Hev.
+        rewrite ev_var with (v:=(VPair (VStr "lam") (VPair (VStr f) (VPair (VStr x) (VPair src_val_p (VStr ".")))))) in Hev.
+        case_eq (string_dec x0 f).
+        intros.
+        assert (f <> x0) as Contra. {
+          eapply Hdistinct.
+          split.
+          simpl. instantiate (1:=(S (Datatypes.length (names ++ env')))%nat).
+          case_eq ((S (Datatypes.length (names ++ env')) =? S (Datatypes.length (names ++ env')))%nat).
+          intros. reflexivity.
+          intros. apply beq_nat_false in H2. omega.
+          instantiate (1:=n0). admit.
+        }
+        subst. contradiction.
+        intros. rewrite H1 in Hev.
+        remember (S (S (S fuel'))) as fuel3'.
+        simpl in Hev. rewrite Heqfuel3' in *.
+        remember (S (S fuel')) as fuel2''.
+        simpl in Hev. rewrite Heqfuel2'' in *.
+        rewrite ev_var with (v:=VStr x0) in Hev.
+        simpl2 Hev p0 Heqp0.
+        destruct fuel'.
+        simpl in Hev. inversion Hev.
+        simpl4 Hev p0 Heqp0.
+        rewrite Heqenv0 in Hev.
+        destruct fuel'.
+        simpl in Hev. inversion Hev.
+        rewrite ev_var with (v:=(VPair (VStr "lam") (VPair (VStr f) (VPair (VStr x) (VPair src_val_p (VStr ".")))))) in Hev.
+        case_eq (string_dec x0 x).
+        intros.
+        assert (x <> x0) as Contra by admit.
+        subst. contradiction.
+        intros. rewrite H2 in Hev.
+        rewrite ev_var with (v:=venv) in Hev.
+        rewrite ev_var with (v:=VStr x0) in Hev.
+        destruct venv; try solve [congruence].
+        eapply ev_fuel_monotonic. instantiate (1:=(S (S (S (S fuel'))))). omega. eapply Hev.
         congruence.
-        unfold n_env. simpl. admit.
+        simpl. reflexivity.
+        unfold n_env. simpl. reflexivity.
+        simpl. reflexivity.
+        rewrite Heqenv0. simpl. reflexivity.
+        rewrite Heqenv0. simpl. reflexivity.
+        rewrite Heqenv0. simpl. reflexivity.
+        unfold n_env. rewrite Heqenv0. simpl. reflexivity.
         unfold n_env. rewrite Heqenv0. simpl. reflexivity.
       }
       apply Henv2.
