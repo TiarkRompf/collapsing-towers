@@ -1266,6 +1266,30 @@ Proof.
     intros E. apply IHprefix.
 Qed.
 
+Lemma index_lt: forall {X} tail n (x:X),
+    index n tail = Some x ->
+    n < length tail.
+Proof.
+  intros X tail. induction tail; intros.
+  - simpl in H. inversion H.
+  - simpl in H.
+    case_eq ((n0 =? Datatypes.length tail)%nat).
+    intros E. apply beq_nat_true in E. simpl. omega.
+    intros E. rewrite E in H. apply IHtail in H. simpl. omega.
+Qed.
+
+Lemma index_unchanged: forall {X} prefix n (x:X) tail,
+    index n tail = Some x ->
+    index n (prefix ++ tail) = Some x.
+Proof.
+  intros X prefix. induction prefix; intros.
+  - simpl. apply H.
+  - simpl.
+    case_eq ((n0 =? Datatypes.length (prefix ++ tail))%nat).
+    intros E. apply beq_nat_true in E. rewrite app_length in E. apply index_lt in H. omega.
+    intros E. eapply IHprefix. apply H.
+Qed.  
+
 Theorem opt_compilation: forall n, forall fuel, fuel < n -> forall p s names env' env2 s' v' Venv_self env0 venv,
     Venv_self = VClo [(src_to_val (to_src names env' p));Vevl;Vlift;Vid] evl_body ->
     env0 = [venv;Venv_self;(src_to_val (to_src names env' p));Vevl;Vlift;Vid] ->
@@ -1885,7 +1909,10 @@ Proof.
           case_eq ((S (Datatypes.length (names ++ env')) =? S (Datatypes.length (names ++ env')))%nat).
           intros. reflexivity.
           intros. apply beq_nat_false in H2. omega.
-          instantiate (1:=n0). admit.
+          instantiate (1:=n0).
+          split.
+          apply index_unchanged. assumption.
+          apply index_lt in Hi. rewrite app_length. omega.
         }
         subst. contradiction.
         intros. rewrite H1 in Hev.
