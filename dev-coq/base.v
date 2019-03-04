@@ -1290,6 +1290,26 @@ Proof.
     intros E. eapply IHprefix. apply H.
 Qed.
 
+Lemma cond1_swap_p: forall venv names env' p p1,
+  (forall n x s, index n env' = Some x -> exists fuel v, ev s fuel [venv;(VClo [(src_to_val (to_src names env' p));Vevl;Vlift;Vid] evl_body);(src_to_val (to_src names env' p));Vevl;Vlift;Vid] (EApp (EVar n_env) (EStr x)) = (s, v) /\ exists e, v = VCode e) ->
+  (forall n x s, index n env' = Some x -> exists fuel v, ev s fuel [venv;(VClo [(src_to_val (to_src names env' p1));Vevl;Vlift;Vid] evl_body);(src_to_val (to_src names env' p1));Vevl;Vlift;Vid] (EApp (EVar n_env) (EStr x)) = (s, v) /\ exists e, v = VCode e).
+Proof.
+  intros. specialize (H n0 x s H0).
+  destruct H as [fuel [v [Hev [e Heq]]]].
+  subst.
+  exists fuel. exists (VCode e).
+  destruct fuel.
+  simpl in Hev. inversion Hev.
+  simpl in Hev. simpl.
+  destruct fuel.
+  simpl in Hev. inversion Hev.
+  rewrite ev_var with (v:=venv) in *.
+  rewrite ev_str in *.
+  split. apply Hev. eexists. reflexivity.
+  unfold n_env. simpl. reflexivity.
+  unfold n_env. simpl. reflexivity.
+Qed.
+
 Theorem opt_compilation: forall n, forall fuel, fuel < n -> forall p s names env' env2 s' v' Venv_self env0 venv,
     Venv_self = VClo [(src_to_val (to_src names env' p));Vevl;Vlift;Vid] evl_body ->
     env0 = [venv;Venv_self;(src_to_val (to_src names env' p));Vevl;Vlift;Vid] ->
@@ -1375,6 +1395,7 @@ Proof.
     simpl1 H p0 Heqp0.
     destruct fuel.
     simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Heqenv0 in Henv1. rewrite Heqenv0 in Henv2.
     simpl in Heqenv0.
     rewrite ev_var with (v:=VPair (VStr "app") (VPair (src_to_val (to_src names env' p1)) (VPair (src_to_val (to_src names env' p2)) (VStr ".")))) in H.
     Arguments string_dec: simpl never.
@@ -1582,14 +1603,16 @@ Proof.
     omega.
     instantiate (1:=env'). instantiate (1:=names). reflexivity.
     subst. simpl. reflexivity. rewrite L. reflexivity. eapply Hdistinct.
-    admit. admit.
+    rewrite Heqsrc_val_p2. eapply cond1_swap_p. eapply Henv1.
+    admit.
     unfold n_env. simpl. reflexivity.
     unfold n_exp. simpl. reflexivity.
     unfold n_ev. simpl. reflexivity.
     omega.
     instantiate (1:=env'). instantiate (1:=names). reflexivity.
     subst. simpl. reflexivity. rewrite L. reflexivity. eapply Hdistinct.
-    admit. admit.
+    rewrite Heqsrc_val_p1. eapply cond1_swap_p. rewrite HeqVenv_self in Henv1. eapply Henv1.
+    admit.
     unfold n_env. rewrite Heqenv0. simpl. reflexivity.
     unfold n_exp. rewrite Heqenv0. simpl. reflexivity.
     unfold n_ev. rewrite Heqenv0. simpl. reflexivity.
