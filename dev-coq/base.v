@@ -606,7 +606,7 @@ Fixpoint to_src (names: list string) (env: list string) (p: exp): exp :=
   | ELet e1 e2 =>
     match names with
     | [] => EError "name ran out"
-    | x1::names => ECons (EStr "let") (ECons (EStr x1) (ECons (to_src names env e1) (ECons (to_src names (x1::env) e2) (EStr "."))))
+    | x1::names => ECons (EStr "let") (ECons (EStr x1) (ECons (to_src (x1::names) env e1) (ECons (to_src names (x1::env) e2) (EStr "."))))
     end
   | EApp e1 e2 => ECons (EStr "app") (ECons (to_src names env e1) (ECons (to_src names env e2) (EStr ".")))
   | EIf e0 e1 e2 => ECons (EStr "if") (ECons (to_src names env e0) (ECons (to_src names env e1) (ECons (to_src names env e2) (EStr "."))))
@@ -2495,12 +2495,12 @@ Proof.
     simpl in H. inversion H. subst. left. repeat eexists.
     rewrite Heqenv0 in Henv1. rewrite Heqenv0 in Henv2.
     simpl in Heqenv0.
-    rewrite ev_var with (v:=VPair (VStr "let") (VPair (VStr x) (VPair (src_to_val (to_src names env' p1)) (VPair (src_to_val (to_src names (x::env') p2)) (VStr "."))))) in H.
+    rewrite ev_var with (v:=VPair (VStr "let") (VPair (VStr x) (VPair (src_to_val (to_src (x::names) env' p1)) (VPair (src_to_val (to_src names (x::env') p2)) (VStr "."))))) in H.
     Arguments string_dec: simpl never.
     simpl in H.
     destruct fuel.
     simpl in H. inversion H. subst. left. repeat eexists.
-    rewrite ev_var with (v:=VPair (VStr "let") (VPair (VStr x) (VPair (src_to_val (to_src names env' p1)) (VPair (src_to_val (to_src names (x::env') p2)) (VStr "."))))) in H.
+    rewrite ev_var with (v:=VPair (VStr "let") (VPair (VStr x) (VPair (src_to_val (to_src (x::names) env' p1)) (VPair (src_to_val (to_src names (x::env') p2)) (VStr "."))))) in H.
     simpl1 H p0 Heqp0.
     destruct fuel.
     simpl in H. inversion H. subst. left. repeat eexists.
@@ -2598,8 +2598,8 @@ Proof.
     simpl4 Heqev1 p0 Heqp0.
     destruct fuel.
     simpl in Heqev1. rewrite <- Heqev1 in H. simpl in H. inversion H. subst. left. repeat eexists.
-    rewrite ev_var with (v:=VPair (VStr "let") (VPair (VStr x) (VPair (src_to_val (to_src names env' p1)) (VPair (src_to_val (to_src names (x::env') p2)) (VStr "."))))) in Heqev1.
-    remember (src_to_val (to_src names env' p1)) as src_val_p1.
+    rewrite ev_var with (v:=VPair (VStr "let") (VPair (VStr x) (VPair (src_to_val (to_src (x::names) env' p1)) (VPair (src_to_val (to_src names (x::env') p2)) (VStr "."))))) in Heqev1.
+    remember (src_to_val (to_src (x::names) env' p1)) as src_val_p1.
     destruct (error_or_not src_val_p1) as [[msg Herr1] | Hnoterr1].
     rewrite Herr1 in Heqev1. rewrite <- Heqev1 in H. inversion H. subst. left. repeat eexists.
     assert (forall {X} (a:string -> X) (b:X), match src_val_p1 with
@@ -2643,7 +2643,7 @@ Proof.
     simpl2 H p0 Heqp0.
     destruct fuel.
     simpl in H. inversion H. subst. left. repeat eexists.
-    rewrite ev_var with (v:=VPair (VStr "let") (VPair (VStr x) (VPair (src_to_val (to_src names env' p1)) (VPair (src_to_val (to_src names (x::env') p2)) (VStr "."))))) in H.
+    rewrite ev_var with (v:=VPair (VStr "let") (VPair (VStr x) (VPair (src_to_val (to_src (x::names) env' p1)) (VPair (src_to_val (to_src names (x::env') p2)) (VStr "."))))) in H.
     remember (src_to_val (to_src names (x :: env') p2)) as src_val_p2.
     destruct (error_or_not src_val_p2) as [[msg Herr2] | Hnoterr2].
     rewrite Herr2 in H. inversion H. subst. left. repeat eexists.
@@ -2674,9 +2674,9 @@ Proof.
     reflexivity.
     reflexivity.
     rewrite L. reflexivity.
-    admit.
-    admit.
-    admit.
+    assumption.
+    eapply cond1_swap_p. rewrite HeqVenv_self in Henv1. eapply Henv1.
+    eapply cond2_swap_p. rewrite HeqVenv_self in Henv2. eapply Henv2.
     unfold n_exp. rewrite Heqenv0. simpl. reflexivity.
     unfold n_exp. rewrite Heqenv0. simpl. reflexivity.
     unfold n_ev. rewrite Heqenv0. simpl. reflexivity.
