@@ -2752,7 +2752,97 @@ Proof.
       congruence. eexists. reflexivity.
     }
 
-    admit.
+    {
+      intros.
+      destruct H0 as [Hi [fuel' Hev]].
+      simpl in Hi.
+      case_eq ((n0 =? Datatypes.length env')%nat); intros E.
+      rewrite E in Hi. inversion Hi. subst.
+      destruct fuel'.
+      simpl in Hev. inversion Hev.
+      simpl in Hev.
+      destruct fuel'.
+      simpl in Hev. inversion Hev.
+      erewrite ev_var in Hev; [idtac | solve [unfold n_env; simpl; reflexivity]].
+      rewrite ev_str in Hev.
+      simpl in Hev.
+      destruct fuel'.
+      simpl in Hev. inversion Hev.
+      simpl1 Hev p0 Heqp0.
+      destruct fuel'.
+      simpl in Hev. inversion Hev.
+      erewrite ev_var in Hev; [idtac | solve [unfold n_env; simpl; reflexivity]].
+      simpl2 Hev p0 Heqp0.
+      destruct fuel'.
+      simpl in Hev. inversion Hev.
+      simpl3 Hev p0 Heqp0.
+      destruct fuel'.
+      simpl in Hev. inversion Hev.
+      erewrite ev_var in Hev; [idtac | solve [unfold n_env; simpl; reflexivity]].
+      simpl3 Hev p0 Heqp0.
+      case_eq (string_dec x1 x1).
+      intros. rewrite H0 in Hev.
+      simpl in Hev. inversion Hev. subst.
+      simpl. rewrite L in E. rewrite E. reflexivity.
+      intros. contradiction.
+      rewrite E in Hi.
+      specialize (Henv2 n0 x1 s0 e).
+      simpl. rewrite L in E. rewrite E. eapply Henv2.
+      split. eapply Hi.
+      destruct fuel'.
+      simpl in Hev. inversion Hev.
+      simpl in Hev.
+      destruct fuel'.
+      simpl in Hev. inversion Hev.
+      erewrite ev_var in Hev; [idtac | solve [unfold n_env; simpl; reflexivity]].
+      rewrite ev_str in Hev.
+      simpl in Hev.
+      destruct fuel'.
+      simpl in Hev. inversion Hev.
+      simpl1 Hev p0 Heqp0.
+      destruct fuel'.
+      simpl in Hev. inversion Hev.
+      rewrite Heqenv0 in Hev.
+      erewrite ev_var in Hev; [idtac | solve [unfold n_env; simpl; reflexivity]].
+      simpl2 Hev p0 Heqp0.
+      destruct fuel'.
+      simpl in Hev. inversion Hev.
+      simpl3 Hev p0 Heqp0.
+      destruct fuel'.
+      simpl in Hev. inversion Hev.
+      erewrite ev_var in Hev; [idtac | solve [unfold n_env; simpl; reflexivity]].
+      simpl3 Hev p0 Heqp0.
+      case_eq (string_dec x1 x).
+      intros. subst.
+      assert (x <> x) as Contra. {
+        eapply Hdistinct.
+        split.
+        instantiate (1:=(length (names ++ env'))).
+        simpl.
+        case_eq ((Datatypes.length (names ++ env') =? Datatypes.length (names ++ env'))%nat).
+        intros. reflexivity.
+        intros. apply beq_nat_false in H1. congruence.
+        split.
+        instantiate (1:=n0).
+        eapply index_unchanged. assumption.
+        apply index_lt in Hi.
+        rewrite app_length. omega.
+      }
+      contradiction.
+
+      intros. rewrite H0 in Hev.
+      remember (S (S (S fuel'))) as fuel03.
+      simpl in Hev.
+      rewrite Heqfuel03 in Hev.
+      erewrite ev_var in Hev; [idtac | solve [unfold n_env; simpl; reflexivity]].
+      erewrite ev_var in Hev; [idtac | solve [unfold n_env; simpl; reflexivity]].
+      exists (S (S (S (S fuel')))).
+      rewrite <- Heqfuel03.
+      simpl. rewrite Heqfuel03.
+      erewrite ev_var; [idtac | solve [unfold n_env; simpl; reflexivity]].
+      destruct venv; try solve [congruence].
+      rewrite ev_str. eapply Hev.
+    }
 
     unfold n_exp. rewrite Heqenv0. simpl. rewrite Heqsrc_val_p1. reflexivity.
     unfold n_ev. rewrite Heqenv0. simpl. reflexivity.
