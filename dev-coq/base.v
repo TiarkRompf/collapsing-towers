@@ -3079,7 +3079,50 @@ Proof.
     inversion H. subst.
     right. eexists. split. reflexivity. simpl. reflexivity.
 
-  - admit.
+  - simpl in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    simpl1 H p0 Heqp0.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    erewrite ev_var in H; [idtac | solve [unfold n_exp; rewrite Heqenv0; simpl; reflexivity]].
+    simpl1 H p0 Heqp0.
+    remember (S fuel) as fuel1.
+    simpl in H. rewrite Heqfuel1 in H.
+    simpl1 H p0 Heqp0.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    erewrite ev_var in H; [idtac | solve [unfold n_exp; rewrite Heqenv0; simpl; reflexivity]].
+    simpl1 H p0 Heqp0.
+    remember (S fuel) as fuel1'.
+    simpl in H. rewrite Heqfuel1' in H.
+    simpl1 H p0 Heqp0.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite ev_str in H.
+    simpl2 H p0 Heqp0.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    erewrite ev_var in H; [idtac | solve [unfold n_exp; rewrite Heqenv0; simpl; reflexivity]].
+    simpl2 H p0 Heqp0.
+    case_eq (string_dec "quote" "quote").
+    intros. rewrite H0 in H.
+    remember (S (S fuel)) as fuel2.
+    simpl in H. rewrite Heqfuel2 in H.
+    erewrite ev_var in H; [idtac | solve [unfold n_l; rewrite Heqenv0; simpl; reflexivity]].
+    unfold Vlift in H.
+    simpl1 H p0 Heqp0.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    erewrite ev_var in H; [idtac | solve [unfold n_exp; rewrite Heqenv0; simpl; reflexivity]].
+    simpl2 H p0 Heqp0.
+    remember (S (S fuel)) as fuel2'.
+    simpl in H. rewrite Heqfuel2' in H.
+    erewrite ev_var in H; [idtac | solve [simpl; reflexivity]].
+    simpl in H. inversion H. subst.
+    right. eexists. split. reflexivity. simpl. reflexivity.
+    intros. contradiction.
+
   - admit.
   - admit.
   - admit.
