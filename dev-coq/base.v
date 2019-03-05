@@ -3252,7 +3252,7 @@ Proof.
     subst. simpl in H. inversion H. subst. left. repeat eexists.
     instantiate (1:=p1) in Hanf0. instantiate (1:=env2) in Hanf0.
     subst.
-    
+
     remember (ev (fst s1, []) (S (S (S (S (S fuel)))))
            [venv; VClo [src_to_val (to_src names env' (EIf p1 p2 p3)); Vevl; Vlift; Vid] evl_body;
            VPair (VStr "if")
@@ -3359,7 +3359,7 @@ Proof.
     rewrite Heqsrc_val_p0. eapply cond2_swap_p. rewrite HeqVenv_self in Henv2. eapply Henv2.
     unfold n_ev. rewrite Heqenv0. simpl. reflexivity.
     congruence. congruence. congruence. congruence.
-    
+
   - simpl in H.
     destruct fuel.
     simpl in H. inversion H. subst. left. repeat eexists.
@@ -4380,7 +4380,7 @@ Proof.
     simpl2 Heqev2 p0 Heqp0.
     destruct fuel.
     simpl in Heqev2. inversion Heqev2. subst. simpl in H. inversion H. subst. left. repeat eexists.
-    erewrite ev_var in Heqev2; [idtac | solve [unfold n_exp; rewrite Heqenv0; simpl; reflexivity]].    
+    erewrite ev_var in Heqev2; [idtac | solve [unfold n_exp; rewrite Heqenv0; simpl; reflexivity]].
     simpl4 Heqev2 p0 Heqp0.
     remember (src_to_val (to_src names env' p2)) as src_val_p2.
     destruct (error_or_not src_val_p2) as [[msg Herr] | Hnoterr2].
@@ -4522,7 +4522,7 @@ Proof.
     simpl2 Heqev2 p0 Heqp0.
     destruct fuel.
     simpl in Heqev2. inversion Heqev2. subst. simpl in H. inversion H. subst. left. repeat eexists.
-    erewrite ev_var in Heqev2; [idtac | solve [unfold n_exp; rewrite Heqenv0; simpl; reflexivity]].    
+    erewrite ev_var in Heqev2; [idtac | solve [unfold n_exp; rewrite Heqenv0; simpl; reflexivity]].
     simpl4 Heqev2 p0 Heqp0.
     remember (src_to_val (to_src names env' p2)) as src_val_p2.
     destruct (error_or_not src_val_p2) as [[msg Herr] | Hnoterr2].
@@ -4684,7 +4684,7 @@ Proof.
     simpl2 Heqev2 p0 Heqp0.
     destruct fuel.
     simpl in Heqev2. inversion Heqev2. subst. simpl in H. inversion H. subst. left. repeat eexists.
-    erewrite ev_var in Heqev2; [idtac | solve [unfold n_exp; rewrite Heqenv0; simpl; reflexivity]].    
+    erewrite ev_var in Heqev2; [idtac | solve [unfold n_exp; rewrite Heqenv0; simpl; reflexivity]].
     simpl4 Heqev2 p0 Heqp0.
     remember (src_to_val (to_src names env' p2)) as src_val_p2.
     destruct (error_or_not src_val_p2) as [[msg Herr] | Hnoterr2].
@@ -4850,7 +4850,7 @@ Proof.
     simpl2 Heqev2 p0 Heqp0.
     destruct fuel.
     simpl in Heqev2. inversion Heqev2. subst. simpl in H. inversion H. subst. left. repeat eexists.
-    erewrite ev_var in Heqev2; [idtac | solve [unfold n_exp; rewrite Heqenv0; simpl; reflexivity]].    
+    erewrite ev_var in Heqev2; [idtac | solve [unfold n_exp; rewrite Heqenv0; simpl; reflexivity]].
     simpl4 Heqev2 p0 Heqp0.
     remember (src_to_val (to_src names env' p2)) as src_val_p2.
     destruct (error_or_not src_val_p2) as [[msg Herr] | Hnoterr2].
@@ -4891,7 +4891,7 @@ Proof.
     rewrite Heqsrc_val_p1. eapply cond1_swap_p. rewrite HeqVenv_self in Henv1. eapply Henv1.
     rewrite Heqsrc_val_p1. eapply cond2_swap_p. rewrite HeqVenv_self in Henv2. eapply Henv2.
     congruence. congruence.
-    
+
   - simpl in H.
     destruct fuel.
     simpl in H. inversion H. subst. left. repeat eexists.
