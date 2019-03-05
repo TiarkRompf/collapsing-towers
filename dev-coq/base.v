@@ -3345,7 +3345,652 @@ Proof.
     unfold n_ev. rewrite Heqenv0. simpl. reflexivity.
     congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence.
 
-  - admit.
+  - simpl in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    simpl1 H p0 Heqp0.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Heqenv0 in Henv1. rewrite Heqenv0 in Henv2.
+    simpl in Heqenv0.
+    erewrite ev_var in H; [idtac | solve [unfold n_exp; rewrite Heqenv0; simpl; reflexivity]].
+    Arguments string_dec: simpl never.
+    simpl1 H p0 Heqp0.
+    remember (S fuel) as fuel1.
+    simpl in H. rewrite Heqfuel1 in H.
+    simpl1 H p0 Heqp0.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    erewrite ev_var in H; [idtac | solve [unfold n_exp; rewrite Heqenv0; simpl; reflexivity]].
+    simpl1 H p0 Heqp0.
+    remember (S fuel) as fuel1'.
+    simpl in H. rewrite Heqfuel1' in H.
+    simpl1 H p0 Heqp0.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite ev_str with (t:="quote") in H.
+    destruct op.
+
+    assert (forall fuel, ev s (S (S fuel)) env0 (EOp1 OCar (EVar n_exp)) = (s, VStr "car")) as Hcar. {
+      intros. simpl. unfold ev. unfold n_exp. rewrite Heqenv0. simpl. reflexivity.
+    }
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite (Hcar fuel) in H.
+    remember (if string_dec "quote" "car" then 1 else 0) as b.
+    vm_compute in Heqb. rewrite Heqb in H.
+    assert (forall fuel op e1 e2, op <> "car" ->
+      ev s (S (S (S (S fuel)))) env0 (EIf (EOp2 OEq (EStr op) (EOp1 OCar (EVar n_exp))) e1 e2) = ev s (S (S (S fuel))) env0 e2) as Helse. {
+      intros fuel0 op e1 e2  Hnotop.
+      remember (S (S (S fuel0))) as fuel03.
+      simpl.
+      rewrite Heqfuel03.
+      remember (S (S fuel0)) as fuel02.
+      simpl.
+      rewrite Heqfuel02.
+      remember (S fuel0) as fuel01.
+      rewrite ev_str with (t:=op).
+      rewrite Heqfuel01.
+      rewrite (Hcar fuel0).
+      remember (string_dec op "car") as cmp.
+      case_eq cmp.
+      intros. congruence. intros ? Hcmp.
+      auto.
+    }
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    remember (S (S (S fuel))) as fuel3.
+    simpl in H.
+    rewrite Heqfuel3 in H.
+    remember (S (S fuel)) as fuel2.
+    simpl1 H p0 Heqp0.
+    rewrite Heqfuel2 in H.
+    rewrite ev_str in H.
+    rewrite Hcar in H.
+    remember (if string_dec "car" "car" then 1 else 0) as c.
+    vm_compute in Heqc. rewrite Heqc in H.
+    remember (S (S fuel)) as fuel2'.
+    simpl in H.
+    rewrite Heqfuel2' in H.
+    remember (ev s (S (S fuel)) env0 (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar n_env))) as evp.
+    symmetry in Heqevp.
+    remember (S fuel) as fuel1''.
+    simpl in Heqevp.
+    rewrite Heqfuel1'' in Heqevp.
+    simpl1 Heqevp p0 Heqp0.
+    destruct fuel.
+    simpl in Heqevp. rewrite <- Heqevp in H. inversion H. subst. left. repeat eexists.
+    rewrite ev_var with (v:=Vevl) in Heqevp.
+    unfold Vevl in Heqevp.
+    simpl2 Heqevp p0 Heqp0.
+    destruct fuel.
+    simpl in Heqevp. rewrite <- Heqevp in H. inversion H. subst. left. repeat eexists.
+    simpl3 Heqevp p0 Heqp0.
+    destruct fuel.
+    simpl in Heqevp. rewrite <- Heqevp in H. inversion H. subst. left. repeat eexists.
+    erewrite ev_var in Heqevp; [idtac | solve [unfold n_exp; rewrite Heqenv0; simpl; reflexivity]].
+    simpl3 Heqevp p0 Heqp0.
+    remember (src_to_val (to_src names env' p)) as src_val_p.
+    destruct (error_or_not src_val_p) as [[msg Herr] | Hnoterr].
+    rewrite Herr in Heqevp. rewrite <- Heqevp in H. inversion H. subst. left. repeat eexists.
+    assert (forall {X} (a:string -> X) (b:X), match src_val_p with
+             | VError msg => (a msg)
+             | _ => b end = b) as A. {
+      destruct src_val_p; simpl; congruence.
+    }
+    rewrite A in Heqevp.
+    simpl1 Heqevp p0 Heqp0.
+    rewrite ev_var with (v:=venv) in Heqevp.
+    destruct (error_or_not venv) as [[msg' Herr'] | Hnoterr'].
+    rewrite Herr' in Heqevp. rewrite <- Heqevp in H. inversion H. subst. left. repeat eexists.
+    assert (match venv with
+           | VError msg => (s, VError msg)
+           | _ =>
+               ev s (S (S (S (S fuel))))
+                 [venv; VClo [src_val_p; VClo [Vlift; Vid] (ELam evl_body); Vlift; Vid] evl_body; src_val_p; VClo [Vlift; Vid] (ELam evl_body); Vlift; Vid]
+                 evl_body
+           end = ev s (S (S (S (S fuel))))
+                 [venv; VClo [src_val_p; VClo [Vlift; Vid] (ELam evl_body); Vlift; Vid] evl_body; src_val_p; VClo [Vlift; Vid] (ELam evl_body); Vlift; Vid]
+                 evl_body) as B. {
+      remember (S (S (S (S fuel)))) as fuel23.
+      destruct venv; simpl; congruence.
+    }
+    rewrite B in Heqevp.
+    destruct evp as [s1 v1].
+    eapply IHnMax in Heqevp.
+    destruct Heqevp as [[? Herr1] | [? [Heq Hanf]]].
+    subst. simpl in H. inversion H. subst. left. repeat eexists.
+    instantiate (1:=p) in Hanf. instantiate (1:=env2) in Hanf.
+    subst.
+    unfold reflectc in H. unfold reflect in H. simpl in H.
+    destruct s1 as [n acc].
+    simpl in H.
+    inversion H. subst.
+    right. eexists. split. reflexivity. simpl. rewrite <- Hanf. unfold reflect. simpl. reflexivity.
+    omega.
+    instantiate (1:=env'). instantiate (1:=names). reflexivity.
+    rewrite Heqsrc_val_p. reflexivity.
+    rewrite L. reflexivity.
+    eapply Hdistinct.
+    rewrite Heqsrc_val_p. eapply cond1_swap_p. rewrite HeqVenv_self in Henv1. eapply Henv1.
+    rewrite Heqsrc_val_p. eapply cond2_swap_p. rewrite HeqVenv_self in Henv2. eapply Henv2.
+    unfold n_env. rewrite Heqenv0. simpl. reflexivity.
+    unfold n_ev. rewrite Heqenv0. simpl. reflexivity.
+    congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence.
+
+    assert (forall fuel, ev s (S (S fuel)) env0 (EOp1 OCar (EVar n_exp)) = (s, VStr "cdr")) as Hcar. {
+      intros. simpl. unfold ev. unfold n_exp. rewrite Heqenv0. simpl. reflexivity.
+    }
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite (Hcar fuel) in H.
+    remember (if string_dec "quote" "cdr" then 1 else 0) as b.
+    vm_compute in Heqb. rewrite Heqb in H.
+    assert (forall fuel op e1 e2, op <> "cdr" ->
+      ev s (S (S (S (S fuel)))) env0 (EIf (EOp2 OEq (EStr op) (EOp1 OCar (EVar n_exp))) e1 e2) = ev s (S (S (S fuel))) env0 e2) as Helse. {
+      intros fuel0 op e1 e2  Hnotop.
+      remember (S (S (S fuel0))) as fuel03.
+      simpl.
+      rewrite Heqfuel03.
+      remember (S (S fuel0)) as fuel02.
+      simpl.
+      rewrite Heqfuel02.
+      remember (S fuel0) as fuel01.
+      rewrite ev_str with (t:=op).
+      rewrite Heqfuel01.
+      rewrite (Hcar fuel0).
+      remember (string_dec op "cdr") as cmp.
+      case_eq cmp.
+      intros. congruence. intros ? Hcmp.
+      auto.
+    }
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    remember (S (S (S fuel))) as fuel3.
+    simpl in H.
+    rewrite Heqfuel3 in H.
+    remember (S (S fuel)) as fuel2.
+    simpl1 H p0 Heqp0.
+    rewrite Heqfuel2 in H.
+    rewrite ev_str in H.
+    rewrite Hcar in H.
+    remember (if string_dec "cdr" "cdr" then 1 else 0) as c.
+    vm_compute in Heqc. rewrite Heqc in H.
+    remember (S (S fuel)) as fuel2'.
+    simpl in H.
+    rewrite Heqfuel2' in H.
+    remember (ev s (S (S fuel)) env0 (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar n_env))) as evp.
+    symmetry in Heqevp.
+    remember (S fuel) as fuel1''.
+    simpl in Heqevp.
+    rewrite Heqfuel1'' in Heqevp.
+    simpl1 Heqevp p0 Heqp0.
+    destruct fuel.
+    simpl in Heqevp. rewrite <- Heqevp in H. inversion H. subst. left. repeat eexists.
+    rewrite ev_var with (v:=Vevl) in Heqevp.
+    unfold Vevl in Heqevp.
+    simpl2 Heqevp p0 Heqp0.
+    destruct fuel.
+    simpl in Heqevp. rewrite <- Heqevp in H. inversion H. subst. left. repeat eexists.
+    simpl3 Heqevp p0 Heqp0.
+    destruct fuel.
+    simpl in Heqevp. rewrite <- Heqevp in H. inversion H. subst. left. repeat eexists.
+    erewrite ev_var in Heqevp; [idtac | solve [unfold n_exp; rewrite Heqenv0; simpl; reflexivity]].
+    simpl3 Heqevp p0 Heqp0.
+    remember (src_to_val (to_src names env' p)) as src_val_p.
+    destruct (error_or_not src_val_p) as [[msg Herr] | Hnoterr].
+    rewrite Herr in Heqevp. rewrite <- Heqevp in H. inversion H. subst. left. repeat eexists.
+    assert (forall {X} (a:string -> X) (b:X), match src_val_p with
+             | VError msg => (a msg)
+             | _ => b end = b) as A. {
+      destruct src_val_p; simpl; congruence.
+    }
+    rewrite A in Heqevp.
+    simpl1 Heqevp p0 Heqp0.
+    rewrite ev_var with (v:=venv) in Heqevp.
+    destruct (error_or_not venv) as [[msg' Herr'] | Hnoterr'].
+    rewrite Herr' in Heqevp. rewrite <- Heqevp in H. inversion H. subst. left. repeat eexists.
+    assert (match venv with
+           | VError msg => (s, VError msg)
+           | _ =>
+               ev s (S (S (S (S fuel))))
+                 [venv; VClo [src_val_p; VClo [Vlift; Vid] (ELam evl_body); Vlift; Vid] evl_body; src_val_p; VClo [Vlift; Vid] (ELam evl_body); Vlift; Vid]
+                 evl_body
+           end = ev s (S (S (S (S fuel))))
+                 [venv; VClo [src_val_p; VClo [Vlift; Vid] (ELam evl_body); Vlift; Vid] evl_body; src_val_p; VClo [Vlift; Vid] (ELam evl_body); Vlift; Vid]
+                 evl_body) as B. {
+      remember (S (S (S (S fuel)))) as fuel23.
+      destruct venv; simpl; congruence.
+    }
+    rewrite B in Heqevp.
+    destruct evp as [s1 v1].
+    eapply IHnMax in Heqevp.
+    destruct Heqevp as [[? Herr1] | [? [Heq Hanf]]].
+    subst. simpl in H. inversion H. subst. left. repeat eexists.
+    instantiate (1:=p) in Hanf. instantiate (1:=env2) in Hanf.
+    subst.
+    unfold reflectc in H. unfold reflect in H. simpl in H.
+    destruct s1 as [n acc].
+    simpl in H.
+    inversion H. subst.
+    right. eexists. split. reflexivity. simpl. rewrite <- Hanf. unfold reflect. simpl. reflexivity.
+    omega.
+    instantiate (1:=env'). instantiate (1:=names). reflexivity.
+    rewrite Heqsrc_val_p. reflexivity.
+    rewrite L. reflexivity.
+    eapply Hdistinct.
+    rewrite Heqsrc_val_p. eapply cond1_swap_p. rewrite HeqVenv_self in Henv1. eapply Henv1.
+    rewrite Heqsrc_val_p. eapply cond2_swap_p. rewrite HeqVenv_self in Henv2. eapply Henv2.
+    unfold n_env. rewrite Heqenv0. simpl. reflexivity.
+    unfold n_ev. rewrite Heqenv0. simpl. reflexivity.
+    congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence.
+
+    assert (forall fuel, ev s (S (S fuel)) env0 (EOp1 OCar (EVar n_exp)) = (s, VStr "isNat")) as Hcar. {
+      intros. simpl. unfold ev. unfold n_exp. rewrite Heqenv0. simpl. reflexivity.
+    }
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite (Hcar fuel) in H.
+    remember (if string_dec "quote" "isNat" then 1 else 0) as b.
+    vm_compute in Heqb. rewrite Heqb in H.
+    assert (forall fuel op e1 e2, op <> "isNat" ->
+      ev s (S (S (S (S fuel)))) env0 (EIf (EOp2 OEq (EStr op) (EOp1 OCar (EVar n_exp))) e1 e2) = ev s (S (S (S fuel))) env0 e2) as Helse. {
+      intros fuel0 op e1 e2  Hnotop.
+      remember (S (S (S fuel0))) as fuel03.
+      simpl.
+      rewrite Heqfuel03.
+      remember (S (S fuel0)) as fuel02.
+      simpl.
+      rewrite Heqfuel02.
+      remember (S fuel0) as fuel01.
+      rewrite ev_str with (t:=op).
+      rewrite Heqfuel01.
+      rewrite (Hcar fuel0).
+      remember (string_dec op "isNat") as cmp.
+      case_eq cmp.
+      intros. congruence. intros ? Hcmp.
+      auto.
+    }
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    remember (S (S (S fuel))) as fuel3.
+    simpl in H.
+    rewrite Heqfuel3 in H.
+    remember (S (S fuel)) as fuel2.
+    simpl1 H p0 Heqp0.
+    rewrite Heqfuel2 in H.
+    rewrite ev_str in H.
+    rewrite Hcar in H.
+    remember (if string_dec "isNat" "isNat" then 1 else 0) as c.
+    vm_compute in Heqc. rewrite Heqc in H.
+    remember (S (S fuel)) as fuel2'.
+    simpl in H.
+    rewrite Heqfuel2' in H.
+    remember (ev s (S (S fuel)) env0 (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar n_env))) as evp.
+    symmetry in Heqevp.
+    remember (S fuel) as fuel1''.
+    simpl in Heqevp.
+    rewrite Heqfuel1'' in Heqevp.
+    simpl1 Heqevp p0 Heqp0.
+    destruct fuel.
+    simpl in Heqevp. rewrite <- Heqevp in H. inversion H. subst. left. repeat eexists.
+    rewrite ev_var with (v:=Vevl) in Heqevp.
+    unfold Vevl in Heqevp.
+    simpl2 Heqevp p0 Heqp0.
+    destruct fuel.
+    simpl in Heqevp. rewrite <- Heqevp in H. inversion H. subst. left. repeat eexists.
+    simpl3 Heqevp p0 Heqp0.
+    destruct fuel.
+    simpl in Heqevp. rewrite <- Heqevp in H. inversion H. subst. left. repeat eexists.
+    erewrite ev_var in Heqevp; [idtac | solve [unfold n_exp; rewrite Heqenv0; simpl; reflexivity]].
+    simpl3 Heqevp p0 Heqp0.
+    remember (src_to_val (to_src names env' p)) as src_val_p.
+    destruct (error_or_not src_val_p) as [[msg Herr] | Hnoterr].
+    rewrite Herr in Heqevp. rewrite <- Heqevp in H. inversion H. subst. left. repeat eexists.
+    assert (forall {X} (a:string -> X) (b:X), match src_val_p with
+             | VError msg => (a msg)
+             | _ => b end = b) as A. {
+      destruct src_val_p; simpl; congruence.
+    }
+    rewrite A in Heqevp.
+    simpl1 Heqevp p0 Heqp0.
+    rewrite ev_var with (v:=venv) in Heqevp.
+    destruct (error_or_not venv) as [[msg' Herr'] | Hnoterr'].
+    rewrite Herr' in Heqevp. rewrite <- Heqevp in H. inversion H. subst. left. repeat eexists.
+    assert (match venv with
+           | VError msg => (s, VError msg)
+           | _ =>
+               ev s (S (S (S (S fuel))))
+                 [venv; VClo [src_val_p; VClo [Vlift; Vid] (ELam evl_body); Vlift; Vid] evl_body; src_val_p; VClo [Vlift; Vid] (ELam evl_body); Vlift; Vid]
+                 evl_body
+           end = ev s (S (S (S (S fuel))))
+                 [venv; VClo [src_val_p; VClo [Vlift; Vid] (ELam evl_body); Vlift; Vid] evl_body; src_val_p; VClo [Vlift; Vid] (ELam evl_body); Vlift; Vid]
+                 evl_body) as B. {
+      remember (S (S (S (S fuel)))) as fuel23.
+      destruct venv; simpl; congruence.
+    }
+    rewrite B in Heqevp.
+    destruct evp as [s1 v1].
+    eapply IHnMax in Heqevp.
+    destruct Heqevp as [[? Herr1] | [? [Heq Hanf]]].
+    subst. simpl in H. inversion H. subst. left. repeat eexists.
+    instantiate (1:=p) in Hanf. instantiate (1:=env2) in Hanf.
+    subst.
+    unfold reflectc in H. unfold reflect in H. simpl in H.
+    destruct s1 as [n acc].
+    simpl in H.
+    inversion H. subst.
+    right. eexists. split. reflexivity. simpl. rewrite <- Hanf. unfold reflect. simpl. reflexivity.
+    omega.
+    instantiate (1:=env'). instantiate (1:=names). reflexivity.
+    rewrite Heqsrc_val_p. reflexivity.
+    rewrite L. reflexivity.
+    eapply Hdistinct.
+    rewrite Heqsrc_val_p. eapply cond1_swap_p. rewrite HeqVenv_self in Henv1. eapply Henv1.
+    rewrite Heqsrc_val_p. eapply cond2_swap_p. rewrite HeqVenv_self in Henv2. eapply Henv2.
+    unfold n_env. rewrite Heqenv0. simpl. reflexivity.
+    unfold n_ev. rewrite Heqenv0. simpl. reflexivity.
+    congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence.
+
+    assert (forall fuel, ev s (S (S fuel)) env0 (EOp1 OCar (EVar n_exp)) = (s, VStr "isStr")) as Hcar. {
+      intros. simpl. unfold ev. unfold n_exp. rewrite Heqenv0. simpl. reflexivity.
+    }
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite (Hcar fuel) in H.
+    remember (if string_dec "quote" "isStr" then 1 else 0) as b.
+    vm_compute in Heqb. rewrite Heqb in H.
+    assert (forall fuel op e1 e2, op <> "isStr" ->
+      ev s (S (S (S (S fuel)))) env0 (EIf (EOp2 OEq (EStr op) (EOp1 OCar (EVar n_exp))) e1 e2) = ev s (S (S (S fuel))) env0 e2) as Helse. {
+      intros fuel0 op e1 e2  Hnotop.
+      remember (S (S (S fuel0))) as fuel03.
+      simpl.
+      rewrite Heqfuel03.
+      remember (S (S fuel0)) as fuel02.
+      simpl.
+      rewrite Heqfuel02.
+      remember (S fuel0) as fuel01.
+      rewrite ev_str with (t:=op).
+      rewrite Heqfuel01.
+      rewrite (Hcar fuel0).
+      remember (string_dec op "isStr") as cmp.
+      case_eq cmp.
+      intros. congruence. intros ? Hcmp.
+      auto.
+    }
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    remember (S (S (S fuel))) as fuel3.
+    simpl in H.
+    rewrite Heqfuel3 in H.
+    remember (S (S fuel)) as fuel2.
+    simpl1 H p0 Heqp0.
+    rewrite Heqfuel2 in H.
+    rewrite ev_str in H.
+    rewrite Hcar in H.
+    remember (if string_dec "isStr" "isStr" then 1 else 0) as c.
+    vm_compute in Heqc. rewrite Heqc in H.
+    remember (S (S fuel)) as fuel2'.
+    simpl in H.
+    rewrite Heqfuel2' in H.
+    remember (ev s (S (S fuel)) env0 (EApp (EApp (EVar n_ev) (EOp1 OCar (EOp1 OCdr (EVar n_exp)))) (EVar n_env))) as evp.
+    symmetry in Heqevp.
+    remember (S fuel) as fuel1''.
+    simpl in Heqevp.
+    rewrite Heqfuel1'' in Heqevp.
+    simpl1 Heqevp p0 Heqp0.
+    destruct fuel.
+    simpl in Heqevp. rewrite <- Heqevp in H. inversion H. subst. left. repeat eexists.
+    rewrite ev_var with (v:=Vevl) in Heqevp.
+    unfold Vevl in Heqevp.
+    simpl2 Heqevp p0 Heqp0.
+    destruct fuel.
+    simpl in Heqevp. rewrite <- Heqevp in H. inversion H. subst. left. repeat eexists.
+    simpl3 Heqevp p0 Heqp0.
+    destruct fuel.
+    simpl in Heqevp. rewrite <- Heqevp in H. inversion H. subst. left. repeat eexists.
+    erewrite ev_var in Heqevp; [idtac | solve [unfold n_exp; rewrite Heqenv0; simpl; reflexivity]].
+    simpl3 Heqevp p0 Heqp0.
+    remember (src_to_val (to_src names env' p)) as src_val_p.
+    destruct (error_or_not src_val_p) as [[msg Herr] | Hnoterr].
+    rewrite Herr in Heqevp. rewrite <- Heqevp in H. inversion H. subst. left. repeat eexists.
+    assert (forall {X} (a:string -> X) (b:X), match src_val_p with
+             | VError msg => (a msg)
+             | _ => b end = b) as A. {
+      destruct src_val_p; simpl; congruence.
+    }
+    rewrite A in Heqevp.
+    simpl1 Heqevp p0 Heqp0.
+    rewrite ev_var with (v:=venv) in Heqevp.
+    destruct (error_or_not venv) as [[msg' Herr'] | Hnoterr'].
+    rewrite Herr' in Heqevp. rewrite <- Heqevp in H. inversion H. subst. left. repeat eexists.
+    assert (match venv with
+           | VError msg => (s, VError msg)
+           | _ =>
+               ev s (S (S (S (S fuel))))
+                 [venv; VClo [src_val_p; VClo [Vlift; Vid] (ELam evl_body); Vlift; Vid] evl_body; src_val_p; VClo [Vlift; Vid] (ELam evl_body); Vlift; Vid]
+                 evl_body
+           end = ev s (S (S (S (S fuel))))
+                 [venv; VClo [src_val_p; VClo [Vlift; Vid] (ELam evl_body); Vlift; Vid] evl_body; src_val_p; VClo [Vlift; Vid] (ELam evl_body); Vlift; Vid]
+                 evl_body) as B. {
+      remember (S (S (S (S fuel)))) as fuel23.
+      destruct venv; simpl; congruence.
+    }
+    rewrite B in Heqevp.
+    destruct evp as [s1 v1].
+    eapply IHnMax in Heqevp.
+    destruct Heqevp as [[? Herr1] | [? [Heq Hanf]]].
+    subst. simpl in H. inversion H. subst. left. repeat eexists.
+    instantiate (1:=p) in Hanf. instantiate (1:=env2) in Hanf.
+    subst.
+    unfold reflectc in H. unfold reflect in H. simpl in H.
+    destruct s1 as [n acc].
+    simpl in H.
+    inversion H. subst.
+    right. eexists. split. reflexivity. simpl. rewrite <- Hanf. unfold reflect. simpl. reflexivity.
+    omega.
+    instantiate (1:=env'). instantiate (1:=names). reflexivity.
+    rewrite Heqsrc_val_p. reflexivity.
+    rewrite L. reflexivity.
+    eapply Hdistinct.
+    rewrite Heqsrc_val_p. eapply cond1_swap_p. rewrite HeqVenv_self in Henv1. eapply Henv1.
+    rewrite Heqsrc_val_p. eapply cond2_swap_p. rewrite HeqVenv_self in Henv2. eapply Henv2.
+    unfold n_env. rewrite Heqenv0. simpl. reflexivity.
+    unfold n_ev. rewrite Heqenv0. simpl. reflexivity.
+    congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence.
+
+    assert (forall fuel, ev s (S (S fuel)) env0 (EOp1 OCar (EVar n_exp)) = (s, VStr "isPair")) as Hcar. {
+      intros. simpl. unfold ev. unfold n_exp. rewrite Heqenv0. simpl. reflexivity.
+    }
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite (Hcar fuel) in H.
+    remember (if string_dec "quote" "isPair" then 1 else 0) as b.
+    vm_compute in Heqb. rewrite Heqb in H.
+    assert (forall fuel op e1 e2, op <> "isPair" ->
+      ev s (S (S (S (S fuel)))) env0 (EIf (EOp2 OEq (EStr op) (EOp1 OCar (EVar n_exp))) e1 e2) = ev s (S (S (S fuel))) env0 e2) as Helse. {
+      intros fuel0 op e1 e2  Hnotop.
+      remember (S (S (S fuel0))) as fuel03.
+      simpl.
+      rewrite Heqfuel03.
+      remember (S (S fuel0)) as fuel02.
+      simpl.
+      rewrite Heqfuel02.
+      remember (S fuel0) as fuel01.
+      rewrite ev_str with (t:=op).
+      rewrite Heqfuel01.
+      rewrite (Hcar fuel0).
+      remember (string_dec op "isPair") as cmp.
+      case_eq cmp.
+      intros. congruence. intros ? Hcmp.
+      auto.
+    }
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Helse in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence.
 
   - admit.
 
