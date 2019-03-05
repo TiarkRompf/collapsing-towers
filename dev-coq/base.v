@@ -2666,8 +2666,94 @@ Proof.
     omega.
     reflexivity. reflexivity. simpl. rewrite L. reflexivity.
     apply distinct_swap1. eapply Hdistinct.
+
+    {
+      intros. simpl in H0.
+      case_eq ((n0 =? Datatypes.length env')%nat); intros E.
+      rewrite E in H0. inversion H0. subst.
+      exists 6. eexists.
+      remember 5 as fuel05. simpl.
+      rewrite Heqfuel05.
+      erewrite ev_var; [idtac | solve [unfold n_env; simpl; reflexivity]].
+      rewrite <- Heqfuel05.
+      simpl.
+      rewrite Heqfuel05.
+      rewrite ev_str.
+      remember 4 as fuel04. simpl.
+      rewrite Heqfuel04.
+      remember 3 as fuel03. simpl.
+      rewrite Heqfuel03.
+      erewrite ev_var; [idtac | solve [unfold n_env; simpl; reflexivity]].
+      split.
+      simpl2g p0 Heqp0.
+      case_eq (string_dec x1 x1).
+      intros.
+      simpl. reflexivity.
+      intros. congruence.
+      eexists. reflexivity.
+
+      rewrite E in H0.
+      specialize (Henv1 n0 x1 s0 H0).
+
+      destruct Henv1 as [fuel' [v' [Hev Hex]]].
+      destruct Hex as [e0' Hex].
+      rewrite Hex in Hev.
+
+      exists (S (S (S (S (S (S fuel')))))). eexists.
+      remember (S (S (S (S (S fuel'))))) as fuel05.
+      simpl.
+      rewrite Heqfuel05.
+      erewrite ev_var; [idtac | solve [unfold n_env; simpl; reflexivity]].
+      rewrite <- Heqfuel05.
+      rewrite Heqfuel05.
+      rewrite ev_str.
+      remember (S (S (S (S fuel')))) as fuel04.
+      simpl.
+      rewrite Heqfuel04.
+      split.
+      simpl1g p0 Heqp0.
+      rewrite Heqenv0.
+      simpl2g p0 Heqp0.
+      simpl4g p0 Heqp0.
+      case_eq (string_dec x1 x).
+
+      intros. subst.
+      assert (x <> x) as Contra. {
+        eapply Hdistinct.
+        split.
+        instantiate (1:=(length (names ++ env'))).
+        simpl.
+        case_eq ((Datatypes.length (names ++ env') =? Datatypes.length (names ++ env'))%nat).
+        intros. reflexivity.
+        intros. apply beq_nat_false in H2. congruence.
+        split.
+        instantiate (1:=n0).
+        eapply index_unchanged. assumption.
+        apply index_lt in H0.
+        rewrite app_length. omega.
+      }
+      contradiction.
+
+      intros.
+      remember (S (S (S fuel'))) as fuel03.
+      simpl. rewrite Heqfuel03.
+      simpl in Hev.
+      destruct fuel'.
+      simpl in Hev. inversion Hev.
+      simpl in Hev.
+      erewrite ev_var; [idtac | solve [unfold n_env; simpl; reflexivity]].
+      destruct fuel'.
+      simpl in Hev. inversion Hev.
+      erewrite ev_var in Hev; [idtac | solve [unfold n_env; simpl; reflexivity]].
+      rewrite ev_str in Hev.
+      erewrite ev_var; [idtac | solve [unfold n_env; simpl; reflexivity]].
+      destruct venv; try solve [congruence].
+      apply ev_fuel_monotonic with (fuel:=S fuel'). omega. eapply Hev.
+      congruence. eexists. reflexivity.
+    }
+
     admit.
-    admit.
+
     unfold n_exp. rewrite Heqenv0. simpl. rewrite Heqsrc_val_p1. reflexivity.
     unfold n_ev. rewrite Heqenv0. simpl. reflexivity.
     omega.
