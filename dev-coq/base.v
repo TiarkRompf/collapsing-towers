@@ -3127,7 +3127,16 @@ Proof.
   - admit.
   - admit.
   - admit.
-  - admit.
+
+  - simpl in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    simpl1 H p0 Heqp0.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    erewrite ev_var in H; [idtac | solve [unfold n_exp; rewrite Heqenv0; simpl; reflexivity]].
+    simpl in H. inversion H. subst. left. repeat eexists.
+
 Admitted.
 
 Theorem opt_compilation0: forall fuel p s names s' v' env0 Venv_self,
