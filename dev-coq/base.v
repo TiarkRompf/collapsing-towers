@@ -3055,7 +3055,30 @@ Proof.
     simpl in H. inversion H. subst. left. repeat eexists.
     congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence. congruence.
     congruence. congruence.
-  - admit.
+
+  - simpl in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    simpl1 H p0 Heqp0.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    rewrite Heqenv0 in Henv1. rewrite Heqenv0 in Henv2.
+    simpl in Heqenv0.
+    erewrite ev_var in H; [idtac | solve [unfold n_exp; rewrite Heqenv0; simpl; reflexivity]].
+    simpl1 H p0 Heqp0.
+    remember (S fuel) as fuel1.
+    simpl in H. rewrite Heqfuel1 in H.
+    erewrite ev_var in H; [idtac | solve [unfold n_exp; rewrite Heqenv0; simpl; reflexivity]].
+    erewrite ev_var in H; [idtac | solve [unfold n_exp; rewrite Heqenv0; simpl; reflexivity]].
+    unfold Vlift in H.
+    simpl in H.
+    destruct fuel.
+    simpl in H. inversion H. subst. left. repeat eexists.
+    simpl1 H p0 Heqp0.
+    simpl1 H p0 Heqp0.
+    inversion H. subst.
+    right. eexists. split. reflexivity. simpl. reflexivity.
+
   - admit.
   - admit.
   - admit.
