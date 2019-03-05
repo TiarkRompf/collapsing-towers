@@ -1673,21 +1673,6 @@ Proof.
     rewrite (Hcar fuel) in H.
     remember (if string_dec "quote" "app" then 1 else 0) as b.
     vm_compute in Heqb. rewrite Heqb in H.
-    assert (forall fuel op, op <> "app" ->
-      ev s (S (S (S fuel))) env0 (EOp2 OEq (EStr op) (EOp1 OCar (EVar n_exp))) = (s, VNat 0)) as Hno. {
-      intros fuel0 op Hnotop.
-      remember (S (S fuel0)) as fuel02.
-      simpl.
-      rewrite Heqfuel02.
-      remember (S fuel0) as fuel01.
-      rewrite ev_str with (t:=op).
-      rewrite Heqfuel01.
-      rewrite (Hcar fuel0).
-      remember (string_dec op "app") as cmp.
-      case_eq cmp.
-      intros. congruence. intros ? Hcmp.
-      auto.
-    }
     assert (forall fuel op e1 e2, op <> "app" ->
       ev s (S (S (S (S fuel)))) env0 (EIf (EOp2 OEq (EStr op) (EOp1 OCar (EVar n_exp))) e1 e2) = ev s (S (S (S fuel))) env0 e2) as Helse. {
       intros fuel0 op e1 e2  Hnotop.
@@ -1920,21 +1905,6 @@ Proof.
     rewrite (Hcar fuel) in H.
     remember (if string_dec "quote" "lam" then 1 else 0) as b.
     vm_compute in Heqb. rewrite Heqb in H.
-    assert (forall fuel op, op <> "lam" ->
-      ev s (S (S (S fuel))) env0 (EOp2 OEq (EStr op) (EOp1 OCar (EVar n_exp))) = (s, VNat 0)) as Hno. {
-      intros fuel0 op Hnotop.
-      remember (S (S fuel0)) as fuel02.
-      simpl.
-      rewrite Heqfuel02.
-      remember (S fuel0) as fuel01.
-      rewrite ev_str with (t:=op).
-      rewrite Heqfuel01.
-      rewrite (Hcar fuel0).
-      remember (string_dec op "lam") as cmp.
-      case_eq cmp.
-      intros. congruence. intros ? Hcmp.
-      auto.
-    }
     assert (forall fuel op e1 e2, op <> "lam" ->
       ev s (S (S (S (S fuel)))) env0 (EIf (EOp2 OEq (EStr op) (EOp1 OCar (EVar n_exp))) e1 e2) = ev s (S (S (S fuel))) env0 e2) as Helse. {
       intros fuel0 op e1 e2  Hnotop.
@@ -2513,21 +2483,6 @@ Proof.
     rewrite (Hcar fuel) in H.
     remember (if string_dec "quote" "let" then 1 else 0) as b.
     vm_compute in Heqb. rewrite Heqb in H.
-    assert (forall fuel op, op <> "let" ->
-      ev s (S (S (S fuel))) env0 (EOp2 OEq (EStr op) (EOp1 OCar (EVar n_exp))) = (s, VNat 0)) as Hno. {
-      intros fuel0 op Hnotop.
-      remember (S (S fuel0)) as fuel02.
-      simpl.
-      rewrite Heqfuel02.
-      remember (S fuel0) as fuel01.
-      rewrite ev_str with (t:=op).
-      rewrite Heqfuel01.
-      rewrite (Hcar fuel0).
-      remember (string_dec op "let") as cmp.
-      case_eq cmp.
-      intros. congruence. intros ? Hcmp.
-      auto.
-    }
     assert (forall fuel op e1 e2, op <> "let" ->
       ev s (S (S (S (S fuel)))) env0 (EIf (EOp2 OEq (EStr op) (EOp1 OCar (EVar n_exp))) e1 e2) = ev s (S (S (S fuel))) env0 e2) as Helse. {
       intros fuel0 op e1 e2  Hnotop.
@@ -2886,21 +2841,6 @@ Proof.
     rewrite (Hcar fuel) in H.
     remember (if string_dec "quote" "lift" then 1 else 0) as b.
     vm_compute in Heqb. rewrite Heqb in H.
-    assert (forall fuel op, op <> "lift" ->
-      ev s (S (S (S fuel))) env0 (EOp2 OEq (EStr op) (EOp1 OCar (EVar n_exp))) = (s, VNat 0)) as Hno. {
-      intros fuel0 op Hnotop.
-      remember (S (S fuel0)) as fuel02.
-      simpl.
-      rewrite Heqfuel02.
-      remember (S fuel0) as fuel01.
-      rewrite ev_str with (t:=op).
-      rewrite Heqfuel01.
-      rewrite (Hcar fuel0).
-      remember (string_dec op "lift") as cmp.
-      case_eq cmp.
-      intros. congruence. intros ? Hcmp.
-      auto.
-    }
     assert (forall fuel op e1 e2, op <> "lift" ->
       ev s (S (S (S (S fuel)))) env0 (EIf (EOp2 OEq (EStr op) (EOp1 OCar (EVar n_exp))) e1 e2) = ev s (S (S (S fuel))) env0 e2) as Helse. {
       intros fuel0 op e1 e2  Hnotop.
@@ -3052,21 +2992,6 @@ Proof.
     }
     remember (if string_dec "quote" "run" then 1 else 0) as b.
     vm_compute in Heqb. rewrite Heqb in H.
-    assert (forall fuel op, op <> "run" ->
-      ev s (S (S (S fuel))) env0 (EOp2 OEq (EStr op) (EOp1 OCar (EVar n_exp))) = (s, VNat 0)) as Hno. {
-      intros fuel0 op Hnotop.
-      remember (S (S fuel0)) as fuel02.
-      simpl.
-      rewrite Heqfuel02.
-      remember (S fuel0) as fuel01.
-      rewrite ev_str with (t:=op).
-      rewrite Heqfuel01.
-      rewrite (Hcar fuel0).
-      remember (string_dec op "run") as cmp.
-      case_eq cmp.
-      intros. congruence. intros ? Hcmp.
-      auto.
-    }
     assert (forall fuel op e1 e2, op <> "run" ->
       ev s (S (S (S (S fuel)))) env0 (EIf (EOp2 OEq (EStr op) (EOp1 OCar (EVar n_exp))) e1 e2) = ev s (S (S (S fuel))) env0 e2) as Helse. {
       intros fuel0 op e1 e2  Hnotop.
