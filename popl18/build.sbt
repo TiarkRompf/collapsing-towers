@@ -5,7 +5,7 @@ libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % 
 resolvers += "Sonatype OSS Snapshots" at
   "https://oss.sonatype.org/content/repositories/snapshots"
 
-libraryDependencies += "com.storm-enroute" %% "scalameter" % "0.8.2"
+libraryDependencies += "com.storm-enroute" %% "scalameter" % "0.19"
 
 testFrameworks += new TestFramework(
     "org.scalameter.ScalaMeterFramework")
