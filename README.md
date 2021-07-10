@@ -6,4 +6,4 @@ a compiler from `L_n` to `L_0`. This compiler should be one-pass, and it should 
 optimal in the sense that the translation removes all interpretive overhead of the
 intermediate languages.
 
-See [`popl18`](popl18) directory for the authorative artifact accompanying the POPL 2018 paper _Collapsing Towers of Interpreters_.
+See [`popl18`](popl18) directory for the authorative artifact accompanying the POPL 2018 paper _Collapsing Towers of Interpreters_ ([PDF](https://lampwww.epfl.ch/~amin/pub/collapsing-towers.pdf)).
